@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.cm import plasma 
 from noise import pnoise1
 import random
 import cv2
@@ -24,19 +23,19 @@ def create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius
     num_debris = 1000  # Increase the number of debris
     for _ in range(num_debris):
         shape_type = random.choice(['circle', 'rectangle', 'ellipse'])
-        reflectivity = random.uniform(0.5, 0.9)  # Reflectivity range for weaker signals
+        reflectivity = random.uniform(0.2, 0.6)  # Reflectivity range for weaker signals
         if shape_type == 'circle':
             center = (random.randint(0, dimensions[1] - 1), random.randint(0, dimensions[0] - 1))
-            radius = random.randint(1, 4)
+            radius = random.randint(1, 3)
             cv2.circle(room, center, radius, reflectivity, -1)
         elif shape_type == 'ellipse':
             center = (random.randint(0, dimensions[1] - 1), random.randint(0, dimensions[0] - 1))
-            axes = (random.randint(1, 4), random.randint(1, 4))
+            axes = (random.randint(1, 3), random.randint(1, 3))
             angle = random.randint(0, 180)
             cv2.ellipse(room, center, axes, angle, 0, 360, reflectivity, -1)
 
     # Apply Gaussian blur to the room
-    room = cv2.GaussianBlur(room, (15, 15), 0)
+    # room = cv2.GaussianBlur(room, (15, 15), 0)
 
     return room
 
@@ -47,7 +46,7 @@ def ground_wave_function(y, amplitude=10, frequency=0.05):
 def material_reflectivity(material_value):
     """ Determine reflectivity based on material value. """
     if material_value > 0.8:
-        return 0.9  # Strong reflector (e.g., metal)
+        return 0.75  # Strong reflector (e.g., metal)
     elif material_value > 0.5:
         return 0.5  # Moderate reflector (e.g., debris)
     else:
@@ -89,7 +88,7 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
                     break
 
         # Add noise and distortion to reflections
-        distorted_reflections = [(r + np.random.normal(0, 8), strength * np.random.uniform(0.9, 1.5)) for r, strength in reflections]
+        distorted_reflections = [(int(r + np.random.normal(0, 2)), strength * np.random.uniform(0.9, 1.1)) for r, strength in reflections]
         sonar_data.append(distorted_reflections if distorted_reflections else [(max_range, 0)])  # Max range without hit
 
     return sonar_data, theta
@@ -99,18 +98,28 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot for traditional room view
-    ax1.imshow(room, cmap='plasma', origin='lower', interpolation='bilinear')  # Change colormap to 'plasma'
+    ax1.imshow(room, cmap='jet', origin='lower', interpolation='bilinear')  # Change colormap to 'plasma'
     ax1.scatter([pos[1]], [pos[0]], color='red')  # Sonar position
-    num_rays = len(sonar_data)
     for reflections, t in zip(sonar_data, theta):
         for r, strength in reflections:
             x = pos[0] + r * np.cos(t)
             y = pos[1] + r * np.sin(t)
-            ax1.plot([pos[1], y], [pos[0], x], 'yellow')
+            ax1.plot([pos[1], y], [pos[0], x], 'r-', alpha=0.5, linewidth=0.5)  # Plot the ray path
     ax1.set_title('Room with Pipe, Ground, and Debris')
 
     # Calculate relative angles to sonar
-    relative_theta = [t - np.radians(angle) for t in theta]
+    # relative_theta = [t - np.radians(angle) for t in theta]
+
+    # Create a 2D array to store signal strengths for the sonar view
+    signal_grid = np.zeros((max_range, len(theta)))
+
+    for i, (reflections, t) in enumerate(zip(sonar_data, theta)):
+        for r, strength in reflections:
+            if 0 <= r < max_range:
+                signal_grid[r, i] = strength*50
+
+    # Smooth the signal grid
+    signal_grid = cv2.GaussianBlur(signal_grid, (5, 5), 0)
 
     # Plot for sonar image view as a cone
     ax2 = plt.subplot(122, projection='polar')
@@ -121,18 +130,9 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
     ax2.set_title('Sonar Image')
     ax2.set_facecolor('white')
 
-    # Adjust colors based on the reflected strength and add blur effect
-    for reflections, t in zip(sonar_data, relative_theta):
-        r_values = [r for r, _ in reflections]
-        strength_values = [strength for _, strength in reflections]
-        color_intensity = np.array(strength_values)  # Use the reflected strength for color intensity
-        color = plasma(color_intensity)  # Change colormap to 'plasma'
-        
-        # Create continuous lines
-        ax2.plot([t] * len(r_values), r_values, color=color, alpha=0.7, linewidth=2)  # Create lines
-
-        # Optionally, create a filled version for smoother appearance
-        ax2.fill_betweenx(r_values, t - 0.01, t + 0.01, color=plasma(0.5), alpha=0.3)  # Fill between for a smoother look
+    # Use imshow to plot the signal grid
+    extent = [-np.radians(angle_width / 2), np.radians(angle_width / 2), 0, max_range]
+    ax2.imshow(signal_grid, aspect='auto', extent=extent, origin='lower', cmap='jet', alpha=1)
 
     plt.show()
 
