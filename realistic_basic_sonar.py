@@ -144,8 +144,8 @@ pipe_center = (30, 500)  # (y, x)
 pipe_radius = 50  # Radius of the pipe
 
 # Define sonar parameters
-pos = (500, 500)
-angle = 180  # direction in degrees (mid-point direction pointing down)
+pos = (250, 250)
+angle = 120  # direction in degrees (mid-point direction pointing down)
 max_range = 600
 angle_width = 60  # total sonar angle width in degrees
 num_rays = 100  # number of rays for higher resolution
