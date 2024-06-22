@@ -48,9 +48,9 @@ def material_reflectivity(material_value):
     if material_value > 0.8:
         return 0.75  # Strong reflector (e.g., metal)
     elif material_value > 0.5:
-        return 0.5  # Moderate reflector (e.g., debris)
+        return 0.33  # Moderate reflector (e.g., debris)
     else:
-        return 0.2  # Weak reflector (e.g., sediment)
+        return 0.15  # Weak reflector (e.g., sediment)
 
 def calculate_multipath_reflections(material_value, incident_strength):
     """ Calculate reflections and transmissions based on material reflectivity. """
@@ -74,7 +74,7 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
         reflections = []
         for r in range(max_range):
             # Apply attenuation due to water
-            current_strength = incident_strength * np.exp(-attenuation_factor * r)
+            current_strength = incident_strength * np.exp(-attenuation_factor * r)*0.8
             x = int(pos[0] + r * np.cos(ray_angle_rad))
             y = int(pos[1] + r * np.sin(ray_angle_rad))
             if x < 0 or x >= rows or y < 0 or y >= cols:
@@ -98,7 +98,7 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot for traditional room view
-    ax1.imshow(room, cmap='jet', origin='lower', interpolation='bilinear')  # Change colormap to 'plasma'
+    ax1.imshow(room, cmap='turbo', origin='lower', interpolation='bilinear')  # Change colormap to 'plasma'
     ax1.scatter([pos[1]], [pos[0]], color='red')  # Sonar position
     for reflections, t in zip(sonar_data, theta):
         for r, strength in reflections:
@@ -132,7 +132,7 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
 
     # Use imshow to plot the signal grid
     extent = [-np.radians(angle_width / 2), np.radians(angle_width / 2), 0, max_range]
-    ax2.imshow(signal_grid, aspect='auto', extent=extent, origin='lower', cmap='jet', alpha=1)
+    ax2.imshow(signal_grid, aspect='auto', extent=extent, origin='lower', cmap='turbo', alpha=1)
 
     plt.show()
 
