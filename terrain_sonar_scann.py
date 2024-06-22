@@ -57,24 +57,29 @@ def create_binary_map_from_slice(dimensions, slice_df):
     return binary_map
 
 def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
-    """ Perform ray-casting to simulate sonar data and return hit coordinates. """
+    """ Perform ray-casting to simulate sonar data. """
     rows, cols = room.shape
-    sonar_hits = []
-    
+    sonar_data = []
+    theta = []
+
     for i in range(num_rays):
         ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
         ray_angle_rad = np.radians(ray_angle)
+        theta.append(ray_angle_rad)
 
         for r in range(max_range):
             x = int(pos[0] + r * np.cos(ray_angle_rad))
             y = int(pos[1] + r * np.sin(ray_angle_rad))
             if x < 0 or x >= rows or y < 0 or y >= cols:
-                break  # Stop when out of bounds
-            if room[x, y] >= 0.5:
-                sonar_hits.append((x, y))  # Add coordinates on hit
+                sonar_data.append((r, 0))  # No detection gives weaker signal
                 break
-
-    return sonar_hits
+            if room[x, y] >= 0.5:
+                sonar_data.append((r, 1))  # Detection gives stronger signal
+                break
+        else:
+            sonar_data.append((max_range, 0))  # Max range without hit
+    
+    return sonar_data, theta
 
 def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
@@ -109,29 +114,34 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
 
     plt.show()
 
+# For testing
+"""""
+# Define room dimensions
+dimensions = (1000, 1000)  # Increase dimensions to capture wider terrain
 
-positions = np.arange(-26, 26.1, 0.1)
-all_sonar_hits = []
+# User inputs for slice extraction
+axis = 'x'  # Choose from 'x', 'y', 'z'
+position = -25  # Position along the chosen axis
 
-for position in positions:
-    slice_df = extract_2d_slice_from_mesh(terrain, position, axis='x')
-    if slice_df is not None:
-        binary_map = create_binary_map_from_slice((1000, 1000), slice_df)
-        pos = (500, 500)  # Sonar position on the map
-        sonar_hits = ray_cast(binary_map, pos, 180, 1000, 60, 100)
-        for hit in sonar_hits:
-            all_sonar_hits.append((position, *hit))  # Save with position
+# Extract the data
+slice_df = extract_2d_slice_from_mesh(terrain, position, axis)
 
-# Visualization of results in 3D
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+if slice_df is not None:
+    # Create binary map with the slice data (using Z for X)
+    binary_map = create_binary_map_from_slice(dimensions, slice_df)
+    
+    # Define sonar parameters
+    pos = (500, 500)  # Update position to be outside the room
+    angle = 180  # direction in degrees (mid-point direction pointing right)
+    max_range = 1000  # Increase max range to fit new dimensions
+    angle_width = 60  # total sonar angle width in degrees
+    num_rays = 100  # number of rays for higher resolution
 
-# Unpack positions and coordinates for plotting
-y, z, x = zip(*all_sonar_hits)
-sc = ax.scatter(x, y, z, c=z, cmap='viridis', marker='o')
-ax.set_box_aspect([10,10,1])
+    # Perform ray-casting
+    sonar_data, theta = ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays)
 
-ax.set_xlabel('X coordinate of sonar')
-ax.set_ylabel('Position along axis')
-ax.set_zlabel('Y coordinate of sonar')
-plt.show()
+    # Visualize both views
+    plot_both_views(binary_map, pos, sonar_data, angle, angle_width, max_range, theta)
+else:
+    print("No slice data available to display.")
+"""""

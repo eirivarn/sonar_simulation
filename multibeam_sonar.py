@@ -1,53 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import viridis
-from noise import pnoise1
+from basic_sonar import create_room_with_pipe_and_ground, ground_wave_function, ray_cast
 
-def create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave):
-    """ Create a 2D room with a pipe and ground wave. """
-    room = np.zeros(dimensions)
-
-    # Draw the pipe (circle) using sub-pixel rendering for smooth edges
-    y, x = np.ogrid[:dimensions[0], :dimensions[1]]
-    distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
-    room += np.clip(1 - (distance_from_center - pipe_radius), 0, 1)
-
-    # Draw the ground wave with smooth interpolation
-    for y in range(dimensions[1]):
-        x = ground_wave(y)
-        if 0 <= x < dimensions[0]:
-            room[x, y] = 1
-
-    return room
-
-def ground_wave_function(y, amplitude=10, frequency=0.05):
-    """ Function to generate a wave-like ground using Perlin noise with higher resolution. """
-    return int(15 + amplitude * pnoise1(y * frequency, repeat=1024))
-
-def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
-    """ Perform ray-casting to simulate sonar data. """
-    rows, cols = room.shape
-    sonar_data = []
-    theta = []
-
-    for i in range(num_rays):
-        ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
-        ray_angle_rad = np.radians(ray_angle)
-        theta.append(ray_angle_rad)
-
-        for r in range(max_range):
-            x = int(pos[0] + r * np.cos(ray_angle_rad))
-            y = int(pos[1] + r * np.sin(ray_angle_rad))
-            if x < 0 or x >= rows or y < 0 or y >= cols:
-                sonar_data.append((r, 0))  # No detection gives weaker signal
-                break
-            if room[x, y] >= 0.5:
-                sonar_data.append((r, 1))  # Detection gives stronger signal
-                break
-        else:
-            sonar_data.append((max_range, 0))  # Max range without hit
-    
-    return sonar_data, theta
 
 def transform_to_global(pos, sonar_data, theta):
     """ Transform intersections from sonar back to the global coordinate system. """
