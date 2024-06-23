@@ -48,7 +48,7 @@ def create_binary_map_from_slice(dimensions, slice_df):
             print(f"Out of bounds: x_index={x_index}, y_index={y_index}")
 
     # Add debris and noise
-    num_debris = 0
+    num_debris = random.randint(200, 500)
     for _ in range(num_debris):
         shape_type = random.choice(['circle', 'ellipse'])
         reflectivity = random.uniform(0.01, 0.1)  # Adjusting reflectivity for better detection
@@ -195,7 +195,7 @@ def main():
     angle_width = 45
     num_rays = 50
 
-    positions = np.arange(-26, 26, 3)
+    positions = np.arange(-26, 0, 3)
     all_sonar_hits = []
 
     for position in positions:
