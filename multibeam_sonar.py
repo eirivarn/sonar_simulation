@@ -74,7 +74,8 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
             ax2.scatter(t, r, color=color, s=10 * strength + 1)
 
     plt.show()
-
+    
+"""""
 # Define room dimensions
 dimensions = (1000, 1000)
 
@@ -103,3 +104,4 @@ for pos, angle in zip(sonar_positions, angles):
 
 # Visualize both views
 plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
+"""""
