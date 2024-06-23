@@ -195,7 +195,7 @@ def main():
     angle_width = 45
     num_rays = 50
 
-    positions = np.arange(-26, 26, 0.5)
+    positions = np.arange(-26, 26, 3)
     all_sonar_hits = []
 
     for position in positions:
