@@ -127,7 +127,7 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot for traditional room view
-    ax1.imshow(room, cmap='gray', origin='lower', interpolation='bilinear')
+    ax1.imshow(room, cmap='turbo', origin='lower', interpolation='bilinear')
     colors = ['red', 'blue', 'green', 'yellow']
     
     for idx, (pos, sonar_data, theta) in enumerate(zip(sonar_positions, all_sonar_data, all_theta)):
@@ -153,6 +153,19 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
     # Transform all global coordinates to the reference sonar's coordinate system
     transformed_coords = transform_to_reference_sonar(ref_pos, ref_angle, global_coords)
 
+    # Create a signal grid for sonar image view
+    num_angles = 100  # Number of angle bins
+    signal_grid = np.zeros((max_range, num_angles))
+
+    for (r, t, strength) in transformed_coords:
+        if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
+            angle_bin = int((t + np.radians(angle_width / 2)) / np.radians(angle_width) * num_angles)
+            distance_bin = int(r)
+            if 0 <= distance_bin < max_range and 0 <= angle_bin < num_angles:
+                signal_grid[distance_bin, angle_bin] += strength
+
+    signal_grid = cv2.GaussianBlur(signal_grid, (5, 5), 1)
+
     # Plot for sonar image view as a cone
     ax2 = plt.subplot(122, projection='polar')
     ax2.set_theta_zero_location('S')  # Set zero angle to the top (straight up)
@@ -162,13 +175,12 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
     ax2.set_title('Sonar Image')
     ax2.set_facecolor('white')
 
-    colors = viridis(np.linspace(0, 1, max_range))
-    for (r, t, strength) in transformed_coords:
-        if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
-            color = colors[int(r * strength)]
-            ax2.scatter(t, r, color=color, s=10 * strength + 1)
+    # Use imshow to plot the signal grid
+    extent = [-np.radians(angle_width / 2), np.radians(angle_width / 2), 0, max_range]
+    ax2.imshow(signal_grid, aspect='auto', extent=extent, origin='lower', cmap='turbo', alpha=1)
 
     plt.show()
+
 
     
 dimensions = (1000, 1000)
@@ -178,10 +190,10 @@ pipe_center = (30, 500)  # (y, x)
 pipe_radius = 50  # Radius of the pipe
 
 # Define sonar parameters
-sonar_positions = [(250, 250), (500, 500), (250, 750)]  # Add more sonar positions as needed
-angles = [120, 180, 230]  # directions in degrees (mid-point direction pointing down)
-max_range = 1000
-angle_width = 60  # total sonar angle width in degrees
+sonar_positions = [(400, 400), (400, 600)]  # Add more sonar positions as needed
+angles = [170, 190]  # directions in degrees (mid-point direction pointing down)
+max_range = 500
+angle_width = 45  # total sonar angle width in degrees
 num_rays = 100  # number of rays for higher resolution
 
 # Create room with pipe and ground wave
