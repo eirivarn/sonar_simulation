@@ -29,6 +29,7 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
     return sonar_hits
 
 
+
 positions = np.arange(-26, 26, 5)
 all_sonar_hits = []
 

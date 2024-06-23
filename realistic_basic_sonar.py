@@ -134,7 +134,7 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
 
     plt.show()
 
-# """""
+"""""
 # Define room dimensions
 dimensions = (1000, 1000)
 
@@ -157,4 +157,4 @@ sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
 
 # Visualize both views
 plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
-# """
+"""

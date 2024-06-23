@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.cm import viridis
 import random
 import cv2
 from noise import pnoise1
