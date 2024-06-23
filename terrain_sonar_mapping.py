@@ -56,3 +56,4 @@ ax.set_xlabel('X coordinate of sonar')
 ax.set_ylabel('Position along axis')
 ax.set_zlabel('Y coordinate of sonar')
 plt.show()
+

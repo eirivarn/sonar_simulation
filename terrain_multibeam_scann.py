@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import random
 import cv2
-from noise import pnoise1
 
 # Load and transform the mesh
 terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
@@ -44,7 +43,7 @@ def create_binary_map_from_slice(dimensions, slice_df):
         y_index = dimensions[1] - 1 - y_index
 
         if 0 <= x_index < dimensions[0] and 0 <= y_index < dimensions[1]:
-            binary_map[x_index, y_index] = 0.75  # Default reflectivity for terrain material (rock/soil)
+            binary_map[x_index, y_index] = 0.65  # Default reflectivity for terrain material (rock/soil)
         else:
             print(f"Out of bounds: x_index={x_index}, y_index={y_index}")
 
@@ -52,14 +51,14 @@ def create_binary_map_from_slice(dimensions, slice_df):
     num_debris = 500
     for _ in range(num_debris):
         shape_type = random.choice(['circle', 'ellipse'])
-        reflectivity = random.uniform(0.01, 0.05)  # Adjusting reflectivity for better detection
+        reflectivity = random.uniform(0.01, 0.1)  # Adjusting reflectivity for better detection
         if shape_type == 'circle':
             center = (random.randint(0, dimensions[1] - 1), random.randint(0, dimensions[0] - 1))
-            radius = random.randint(1, 2)
+            radius = random.randint(1, 3)
             cv2.circle(binary_map, center, radius, reflectivity, -1)
         elif shape_type == 'ellipse':
             center = (random.randint(0, dimensions[1] - 1), random.randint(0, dimensions[0] - 1))
-            axes = (random.randint(1, 2), random.randint(1, 2))
+            axes = (random.randint(1, 3), random.randint(1, 2))
             angle = random.randint(0, 180)
             cv2.ellipse(binary_map, center, axes, angle, 0, 360, reflectivity, -1)
 
@@ -73,9 +72,9 @@ def material_reflectivity(material_value):
     if material_value > 0.6:  # Adjusted threshold for debris
         return 0.75  # Strong reflector (e.g., metal)
     elif material_value > 0.3:
-        return 0.001  # Moderate reflector (e.g., debris)
+        return 0.01  # Moderate reflector (e.g., debris)
     else:
-        return 0.0001  # Weak reflector (e.g., sediment)
+        return 0.001  # Weak reflector (e.g., sediment)
 
 def calculate_multipath_reflections(material_value, incident_strength):
     """ Calculate reflections and transmissions based on material reflectivity. """
@@ -84,7 +83,7 @@ def calculate_multipath_reflections(material_value, incident_strength):
     transmitted_strength = incident_strength * (1 - reflectivity)
     return reflected_strength, transmitted_strength
 
-def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_factor=0.0001):
+def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_factor=0.0003):
     """ Perform ray-casting to simulate sonar data with multipath reflections and water attenuation. """
     rows, cols = room.shape
     sonar_data = []
@@ -108,8 +107,6 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
                 reflected_strength, transmitted_strength = calculate_multipath_reflections(room[x, y], current_strength)
                 reflections.append((r, reflected_strength))
                 incident_strength = transmitted_strength
-                # Debugging: Print the current status of the ray
-                # print(f"Ray {i}: Hit at (x={x}, y={y}) with reflected_strength={reflected_strength}, transmitted_strength={transmitted_strength}")
 
                 # Continue propagating the ray
                 if transmitted_strength < 0.1:  # Stop if the transmitted signal is too weak
@@ -120,30 +117,62 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
 
     return sonar_data, theta
 
-def plot_both_views(room, sonar_position, sonar_data, angle, angle_width, max_range, theta):
+def transform_to_global(pos, sonar_data, theta):
+    """ Transform intersections from sonar back to the global coordinate system. """
+    global_coords = []
+    for reflections, t in zip(sonar_data, theta):
+        for (r, strength) in reflections:
+            x = pos[0] + r * np.cos(t)
+            y = pos[1] + r * np.sin(t)
+            global_coords.append((x, y, strength))
+    return global_coords
+
+def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
+    """ Transform global coordinates to the reference sonar's coordinate system. """
+    transformed_coords = []
+    ref_angle_rad = np.radians(ref_angle)
+    cos_angle = np.cos(-ref_angle_rad)
+    sin_angle = np.sin(-ref_angle_rad)
+    for (x, y, strength) in global_coords:
+        dx = x - ref_pos[0]
+        dy = y - ref_pos[1]
+        transformed_x = dx * cos_angle - dy * sin_angle
+        transformed_y = dx * sin_angle + dy * cos_angle
+        transformed_r = np.sqrt(transformed_x**2 + transformed_y**2)
+        transformed_theta = np.arctan2(transformed_y, transformed_x)
+        transformed_coords.append((transformed_r, transformed_theta, strength))
+    return transformed_coords
+
+def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot for traditional room view
     ax1.imshow(room, cmap='turbo', origin='lower', interpolation='bilinear')
-    ax1.scatter([sonar_position[1]], [sonar_position[0]], color='red')  # Sonar position
-    for reflections, t in zip(sonar_data, theta):
-        for r, strength in reflections:
-            x = sonar_position[0] + r * np.cos(t)
-            y = sonar_position[1] + r * np.sin(t)
-            ax1.plot([sonar_position[1], y], [sonar_position[0], x], 'r-', linewidth=0.5)
-
-    # Create a 2D array to store signal strengths for the sonar view
-    signal_grid = np.zeros((max_range, len(theta)))
-
-    for i, (reflections, t) in enumerate(zip(sonar_data, theta)):
-        for r, strength in reflections:
-            if 0 <= r < max_range:
-                signal_grid[r, i] = strength
-
-    # Smooth the signal grid
-    signal_grid = cv2.GaussianBlur(signal_grid, (5, 5), 0)
+    colors = ['red', 'blue', 'green', 'yellow']
     
+    for idx, (pos, sonar_data, theta) in enumerate(zip(sonar_positions, all_sonar_data, all_theta)):
+        ax1.scatter([pos[1]], [pos[0]], color=colors[idx % len(colors)])  # Sonar position
+        for reflections, t in zip(sonar_data, theta):
+            for (r, strength) in reflections:
+                x = pos[0] + r * np.cos(t)
+                y = pos[1] + r * np.sin(t)
+                ax1.plot([pos[1], y], [pos[0], x], color=colors[idx % len(colors)])
+    
+    ax1.set_title('Room with Pipe and Ground')
+
+    # Transform all sonar data to global coordinates
+    global_coords = []
+    for pos, sonar_data, theta in zip(sonar_positions, all_sonar_data, all_theta):
+        global_coords.extend(transform_to_global(pos, sonar_data, theta))
+
+    # Use the first sonar as the reference sonar
+    ref_pos = sonar_positions[0]
+    ref_angle = angles[0]
+
+    # Transform all global coordinates to the reference sonar's coordinate system
+    transformed_coords = transform_to_reference_sonar(ref_pos, ref_angle, global_coords)
+
     # Plot for sonar image view as a cone
     ax2 = plt.subplot(122, projection='polar')
     ax2.set_theta_zero_location('S')  # Set zero angle to the top (straight up)
@@ -153,38 +182,61 @@ def plot_both_views(room, sonar_position, sonar_data, angle, angle_width, max_ra
     ax2.set_title('Sonar Image')
     ax2.set_facecolor('white')
 
-    # Use imshow to plot the signal grid
-    extent = [-np.radians(angle_width / 2), np.radians(angle_width / 2), 0, max_range]
-    ax2.imshow(signal_grid, aspect='auto', extent=extent, origin='lower', cmap='turbo', alpha=1)
+    for (r, t, strength) in transformed_coords:
+        if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
+            ax2.scatter(t, r, s=10 * strength + 1, cmap='turbo', alpha=0.5)
 
     plt.show()
 
-# Main Execution
-dimensions = (1000, 1000)
-sonar_position = (500, 500)
-angle = 180
-max_range = 500
-angle_width = 45
-num_rays = 50
+def main():
+    dimensions = (1000, 1000)
+    sonar_positions = [(500, 500),(250, 250), (250, 750)]
+    angles = [180, 130, 230]
+    max_range = 500
+    angle_width = 45
+    num_rays = 50
 
-# Extract a single slice and create binary map
-position = -25
-slice_df = extract_2d_slice_from_mesh(terrain, position, axis='x')
+    positions = np.arange(-26, 26, 5)
+    all_sonar_hits = []
 
-if slice_df is not None:
-    binary_map = create_binary_map_from_slice(dimensions, slice_df)
-    
+    for position in positions:
+        position = -position
+        slice_df = extract_2d_slice_from_mesh(terrain, position, axis='x')
+        if slice_df is not None:
+            binary_map = create_binary_map_from_slice(dimensions, slice_df)
 
-    # Perform ray-casting on the binary map
-    sonar_data, theta = ray_cast(binary_map, sonar_position, angle, max_range, angle_width, num_rays)
+            all_sonar_data = []
+            all_theta = []
 
-    # Debugging: Print the sonar data
-    #for i, (reflections, t) in enumerate(zip(sonar_data, theta)):
-    #    print(f"Ray {i}:")
-    #    for r, strength in reflections:
-    #        # print(f"  Distance={r}, Strength={strength}")
+            for sonar_position, angle in zip(sonar_positions, angles):
+                sonar_data, theta = ray_cast(binary_map, sonar_position, angle, max_range, angle_width, num_rays)
+                all_sonar_data.append(sonar_data)
+                all_theta.append(theta)
 
-    # Visualize both views
-    plot_both_views(binary_map, sonar_position, sonar_data, angle, angle_width, max_range, theta)
-else:
-    print("No slice data available to display.")
+                for reflections, t in zip(sonar_data, theta):
+                    for r, strength in reflections:
+                        if r < max_range:
+                            x = int(sonar_position[0] + r * np.cos(t))
+                            y = int(sonar_position[1] + r * np.sin(t))
+                            all_sonar_hits.append((position, x, y))
+
+    # Visualization of results in 3D
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Unpack positions and coordinates for plotting
+    y, z, x = zip(*all_sonar_hits)
+    sc = ax.scatter(x, y, z, c=z, cmap='viridis', marker='o', s=1)
+    ax.set_box_aspect([1, 1, 1])
+
+    ax.set_xlabel('X coordinate of sonar')
+    ax.set_ylabel('Position along axis')
+    ax.set_zlabel('Y coordinate of sonar')
+    plt.show()
+
+    # Plot last slice with sonar data
+    if slice_df is not None:
+        plot_both_views(binary_map, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
+
+if __name__ == "__main__":
+    main()
