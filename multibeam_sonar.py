@@ -3,30 +3,44 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import viridis
 from basic_sonar import create_room_with_pipe_and_ground, ground_wave_function, ray_cast
 
-
 def transform_to_global(pos, sonar_data, theta):
     """ Transform intersections from sonar back to the global coordinate system. """
     global_coords = []
-    for (r, strength), t in zip(sonar_data, theta):
-        x = pos[0] + r * np.cos(t)
-        y = pos[1] + r * np.sin(t)
-        global_coords.append((x, y, strength))
-    return global_coords
 
+    # Loop through sonar data and corresponding angles
+    for (r, strength), t in zip(sonar_data, theta):
+        # Calculate global x coordinate
+        x = pos[0] + r * np.cos(t)
+        # Calculate global y coordinate
+        y = pos[1] + r * np.sin(t)
+        # Append the calculated global coordinates and strength
+        global_coords.append((x, y, strength))
+
+    return global_coords
 def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
     """ Transform global coordinates to the reference sonar's coordinate system. """
     transformed_coords = []
+
+    # Convert reference angle to radians
     ref_angle_rad = np.radians(ref_angle)
+    # Precompute cosine and sine of the negative reference angle
     cos_angle = np.cos(-ref_angle_rad)
     sin_angle = np.sin(-ref_angle_rad)
+
+    # Loop through global coordinates
     for (x, y, strength) in global_coords:
+        # Calculate the difference in x and y coordinates relative to the reference position
         dx = x - ref_pos[0]
         dy = y - ref_pos[1]
+        # Rotate the coordinates to align with the reference angle
         transformed_x = dx * cos_angle - dy * sin_angle
         transformed_y = dx * sin_angle + dy * cos_angle
+        # Calculate the range and angle in the reference coordinate system
         transformed_r = np.sqrt(transformed_x**2 + transformed_y**2)
         transformed_theta = np.arctan2(transformed_y, transformed_x)
+        # Append the transformed coordinates and strength
         transformed_coords.append((transformed_r, transformed_theta, strength))
+
     return transformed_coords
 
 def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta):

@@ -106,7 +106,7 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
     ax1.set_title('Room with Pipe, Ground, and Debris')
 
     # Calculate relative angles to sonar
-    # relative_theta = [t - np.radians(angle) for t in theta]
+    relative_theta = [t - np.radians(angle) for t in theta]
 
     # Create a 2D array to store signal strengths for the sonar view
     signal_grid = np.zeros((max_range, len(theta)))

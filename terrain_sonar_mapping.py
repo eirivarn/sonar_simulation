@@ -3,11 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from terrain_sonar_scann import extract_2d_slice_from_mesh, create_binary_map_from_slice
 
-# Load and transform the mesh
-terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
-rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
-terrain.points = terrain.points.dot(rotation_matrix)
-
 def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
     """ Perform ray-casting to simulate sonar data and return hit coordinates. """
     rows, cols = room.shape
@@ -29,6 +24,11 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
     return sonar_hits
 
 
+#"""
+# Load and transform the mesh
+terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
+rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+terrain.points = terrain.points.dot(rotation_matrix)
 
 positions = np.arange(-26, 26, 5)
 all_sonar_hits = []
@@ -56,4 +56,4 @@ ax.set_xlabel('X coordinate of sonar')
 ax.set_ylabel('Position along axis')
 ax.set_zlabel('Y coordinate of sonar')
 plt.show()
-
+#"""

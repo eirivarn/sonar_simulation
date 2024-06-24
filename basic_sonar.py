@@ -82,6 +82,7 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
 
     plt.show()
 
+"""
 # Define room dimensions
 dimensions = (1000, 1000)
 
@@ -96,7 +97,7 @@ max_range = 600
 angle_width = 60  # total sonar angle width in degrees
 num_rays = 100  # number of rays for higher resolution
 
-"""""
+
 # Create room with pipe and ground wave
 room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
 

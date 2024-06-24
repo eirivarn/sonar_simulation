@@ -43,7 +43,7 @@ def create_binary_map_from_slice(dimensions, slice_df):
         y_index = dimensions[1] - 1 - y_index
 
         if 0 <= x_index < dimensions[0] and 0 <= y_index < dimensions[1]:
-            binary_map[x_index, y_index] = 0.65  # Default reflectivity for terrain material (rock/soil)
+            binary_map[x_index, y_index] = 0.65  # Default reflectivity for terrain material 
         else:
             print(f"Out of bounds: x_index={x_index}, y_index={y_index}")
 
