@@ -159,6 +159,7 @@ def plot_both_views(room, sonar_position, sonar_data, angle, angle_width, max_ra
 
     plt.show()
 
+""""
 # Main Execution
 dimensions = (1000, 1000)
 sonar_position = (500, 500)
@@ -188,3 +189,4 @@ if slice_df is not None:
     plot_both_views(binary_map, sonar_position, sonar_data, angle, angle_width, max_range, theta)
 else:
     print("No slice data available to display.")
+"""
