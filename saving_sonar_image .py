@@ -14,7 +14,7 @@ def create_sonar_image(sonar_data, max_range, num_rays):
   return image
 
 
-position = -25
+position = 10
 filename = f"sonar_results/position_{position}.png"
 dimensions = (1000, 1000)
 sonar_position = (700, 500)
