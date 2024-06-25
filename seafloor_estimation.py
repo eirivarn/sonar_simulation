@@ -85,7 +85,7 @@ for i in range(1, num_labels + 1):
 largest_component_mask = (labeled_image == largest_component).astype(np.uint8) * 255
 
 # Save the largest connected component
-largest_component_image_path = 'largest_component.png'
+largest_component_image_path = '/sonar_results/largest_component.png'
 cv2.imwrite(largest_component_image_path, largest_component_mask)
 
 # Display the original, binary, connected, and largest component images
