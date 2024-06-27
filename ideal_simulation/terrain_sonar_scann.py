@@ -76,3 +76,4 @@ def run_ideal_mesh_sonar_scann_simulation(mesh_path, dimensions, axis, position,
         plot_both_views(binary_map, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
     else:
         print("No slice data available to display.")
+        

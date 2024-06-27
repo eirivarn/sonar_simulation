@@ -23,7 +23,7 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
 
     return sonar_hits
 
-def run_ideal_mesh_sonar_mapping_simulation(mesh_path, dimensions, axis, sonar_positions, pos, angle, max_range, angle_width, num_rays):
+def run_ideal_mesh_sonar_mapping_simulation(mesh_path, dimensions, axis, slice_positions, sonar_positions, angles, max_range, angle_width, num_rays):
     """ Run a terrain-based sonar simulation with given mesh and multiple sonar positions and visualize the results. """
     # Load and transform the mesh
     terrain = pv.read(mesh_path)
@@ -31,30 +31,32 @@ def run_ideal_mesh_sonar_mapping_simulation(mesh_path, dimensions, axis, sonar_p
     terrain.points = terrain.points.dot(rotation_matrix)
 
     # Initialize list to store all sonar data
-    all_sonar_data = []
+    all_sonar_hits = []
 
-    # Iterate over sonar positions and their configurations
-    for idx, position in enumerate(sonar_positions):
-        position = -position
-        slice_df = extract_2d_slice_from_mesh(terrain, position, axis=axis)
+    # Iterate over slice positions and their configurations
+    for slice_position in slice_positions:
+        slice_position = -1 * slice_position
+
+        # Extract 2D slice from the mesh
+        slice_df = extract_2d_slice_from_mesh(terrain, slice_position, axis)
         if slice_df is not None:
-            binary_map = create_binary_map_from_slice((1000, 1000), slice_df)
-            pos = (500, 500)  # Center sonar position on the map
-            angle = angles[idx]
-            sonar_data = ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays)
-            for data in sonar_data:
-                all_sonar_data.append((position, *data))  # Save with position
+            # Create binary map from slice data
+            binary_map = create_binary_map_from_slice(dimensions, slice_df)
 
+            # Store sonar data for each sonar position and angle
+            for sonar_position, sonar_angle in zip(sonar_positions, angles):
+                sonar_hits = ray_cast(binary_map, sonar_position, sonar_angle, max_range, angle_width, num_rays)
+                for hit in sonar_hits:
+                    all_sonar_hits.append((slice_position, *hit))  
+    
     # Visualization of results in 3D
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     # Unpack positions and coordinates for plotting
-    positions, ranges_angles, hit_coords = zip(*all_sonar_data)
-    ranges, angles = zip(*ranges_angles)
-    y, z, x = zip(*hit_coords)
+    y, z, x = zip(*all_sonar_hits)
     sc = ax.scatter(x, y, z, c=z, cmap='viridis', marker='o')
-    ax.set_box_aspect([10, 10, 1])
+    ax.set_box_aspect([10,10,1])
 
     ax.set_xlabel('X coordinate of sonar')
     ax.set_ylabel('Position along axis')
