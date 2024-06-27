@@ -82,28 +82,14 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
 
     plt.show()
 
-"""
-# Define room dimensions
-dimensions = (1000, 1000)
+def run_ideal_basic_sonar_simulation(dimensions, pipe_center, pipe_radius, pos, angle, max_range, angle_width, num_rays):
+    """ Run a basic sonar simulation with given parameters. """
+    # Create room with pipe and ground wave
+    room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
 
-# Define pipe parameters (circle)
-pipe_center = (30, 500)  # (y, x)
-pipe_radius = 50  # Radius of the pipe
+    # Perform ray-casting
+    sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
 
-# Define sonar parameters
-pos = (500, 500)
-angle = 180  # direction in degrees (mid-point direction pointing down)
-max_range = 600
-angle_width = 60  # total sonar angle width in degrees
-num_rays = 100  # number of rays for higher resolution
-
-
-# Create room with pipe and ground wave
-room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
-
-# Perform ray-casting
-sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
-
-# Visualize both views
-plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
-"""
+    # Visualize both views
+    plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
+    

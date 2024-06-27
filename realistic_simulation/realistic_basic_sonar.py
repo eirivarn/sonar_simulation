@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from noise import pnoise1
 import random
 import cv2
-from basic_sonar import ground_wave_function
 
 def create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius, ground_wave):
     """ Create a 2D room with a pipe, ground wave, and random debris. """
@@ -91,7 +90,7 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
 
     return sonar_data, theta
 
-def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta):
+def plot_both_views(room, pos, sonar_data, angle_width, max_range, theta):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -104,9 +103,6 @@ def plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
             y = pos[1] + r * np.sin(t)
             ax1.plot([pos[1], y], [pos[0], x], 'r-', alpha=0.5, linewidth=0.5)  # Plot the ray path
     ax1.set_title('Room with Pipe, Ground, and Debris')
-
-    # Calculate relative angles to sonar
-    relative_theta = [t - np.radians(angle) for t in theta]
 
     # Create a 2D array to store signal strengths for the sonar view
     signal_grid = np.zeros((max_range, len(theta)))

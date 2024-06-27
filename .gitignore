@@ -111,7 +111,7 @@ public/uploads
 .envrc
 
 # virtualenv
-/sonar-simulator
+/sonar-simulator-venv
 
 #images
 *.png

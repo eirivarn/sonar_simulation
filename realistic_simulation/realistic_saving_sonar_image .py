@@ -1,4 +1,5 @@
-from realistic_terrain_sonar_scann import * 
+from ideal_simulation.terrain_sonar_scann import * 
+import cv2
 
 def create_sonar_image(sonar_data, max_range, num_rays):
   """ Create a sonar image from the ray cast data. """
@@ -9,12 +10,11 @@ def create_sonar_image(sonar_data, max_range, num_rays):
         image[r, i] = strength
 
   # Apply smoothing (optional)
-  image = cv2.GaussianBlur(image, (5, 5), 0)
-  image = cv2.resize(image, (400, 500), interpolation=cv2.INTER_LINEAR)
+  image = cv2.GaussianBlur(image, (1, 1), 0)
+  image = cv2.resize(image, (400, 600), interpolation=cv2.INTER_LINEAR)
   return image
 
-
-position = 5
+position = 11
 filename = f"sonar_results/position_{position}.png"
 dimensions = (1000, 1000)
 sonar_position = (700, 500)

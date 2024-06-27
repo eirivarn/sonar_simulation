@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import viridis
-from basic_sonar import create_room_with_pipe_and_ground, ground_wave_function, ray_cast
+from ideal_simulation.basic_sonar import create_room_with_pipe_and_ground, ground_wave_function, ray_cast
 
 def transform_to_global(pos, sonar_data, theta):
     """ Transform intersections from sonar back to the global coordinate system. """
@@ -17,6 +17,7 @@ def transform_to_global(pos, sonar_data, theta):
         global_coords.append((x, y, strength))
 
     return global_coords
+
 def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
     """ Transform global coordinates to the reference sonar's coordinate system. """
     transformed_coords = []
@@ -88,34 +89,20 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
             ax2.scatter(t, r, color=color, s=10 * strength + 1)
 
     plt.show()
-    
-"""""
-# Define room dimensions
-dimensions = (1000, 1000)
 
-# Define pipe parameters (circle)
-pipe_center = (30, 500)  # (y, x)
-pipe_radius = 50  # Radius of the pipe
+def run_ideal_multiple_sonar_simulation(dimensions, pipe_center, pipe_radius, sonar_positions, angles, max_range, angle_width, num_rays):
+    """ Run a basic sonar simulation with given parameters. """
+    # Create room with pipe and ground wave
+    room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
 
-# Define sonar parameters
-sonar_positions = [(250, 250), (500, 500), (250, 750)]  # Add more sonar positions as needed
-angles = [120, 180, 230]  # directions in degrees (mid-point direction pointing down)
-max_range = 1000
-angle_width = 60  # total sonar angle width in degrees
-num_rays = 100  # number of rays for higher resolution
+    # Perform ray-casting for each sonar
+    all_sonar_data = []
+    all_theta = []
 
-# Create room with pipe and ground wave
-room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
+    for pos, angle in zip(sonar_positions, angles):
+        sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
+        all_sonar_data.append(sonar_data)
+        all_theta.append(theta)
 
-# Perform ray-casting for each sonar
-all_sonar_data = []
-all_theta = []
-
-for pos, angle in zip(sonar_positions, angles):
-    sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
-    all_sonar_data.append(sonar_data)
-    all_theta.append(theta)
-
-# Visualize both views
-plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
-"""""
+    # Visualize both views
+    plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)

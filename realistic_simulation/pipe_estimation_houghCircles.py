@@ -4,13 +4,13 @@ import numpy as np
 #TODO Make this more robust 
 
 # Load image
-image = cv2.imread('sonar_results/position_10.png', cv2.IMREAD_GRAYSCALE)
+image = cv2.imread('sonar_results/position_11.png', cv2.IMREAD_GRAYSCALE)
 
 # Apply Gaussian Blur
-blurred = cv2.GaussianBlur(image, (9, 9), 0)
+blurred = cv2.GaussianBlur(image, (3, 3), 0)
 
 # Detect circles representing the pipe
-circles = cv2.HoughCircles(blurred,cv2.HOUGH_GRADIENT_ALT , 2 , 100 ,param1=30 ,param2=0.1, minRadius=40 ,maxRadius=100)
+circles = cv2.HoughCircles(blurred,cv2.HOUGH_GRADIENT_ALT , 2 , 50 ,param1=30 ,param2=0.1, minRadius=40 ,maxRadius=300)
 unprocessed_image = cv2.imread('sonar_results/position_-25.png', cv2.IMREAD_COLOR)
 if circles is not None:
     circles = np.round(circles[0, :]).astype("int")

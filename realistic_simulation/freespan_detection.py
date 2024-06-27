@@ -29,7 +29,7 @@ def bresenham_line(x0, y0, x1, y1):
     return points
 
 # Load the image for both pipeline and seafloor detection
-image_path = 'sonar_results/position_-25.png'
+image_path = 'sonar_results/position_11.png'
 image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
 # Validate the image load
@@ -169,5 +169,5 @@ ax[3].set_title('Pipeline Detected')
 ax[4].imshow(overlap_mask, cmap='gray')
 ax[4].set_title(f'Overlap (Area: {overlap_area} pixels)')
 ax[5].imshow(color_image)
-ax[5].set_title(f'Composite Image\nOverlap: {overlap_percentage:.2f}%')
+ax[5].set_title(f'Image\nOverlap: {overlap_percentage:.2f}%')
 plt.show()

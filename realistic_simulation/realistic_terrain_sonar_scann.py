@@ -27,7 +27,7 @@ def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     df = pd.DataFrame(points, columns=['X', 'Y', 'Z'])
     return df
 
-def create_binary_map_from_slice(dimensions, slice_df):
+def create_binary_map_from_slice(dimensions, slice_df, num_debris=100):
     """ Create a binary map from slice data with added realism and noise. """
     binary_map = np.zeros(dimensions)
     min_x, max_x = slice_df['Z'].min(), slice_df['Z'].max()
@@ -49,7 +49,7 @@ def create_binary_map_from_slice(dimensions, slice_df):
             print(f"Out of bounds: x_index={x_index}, y_index={y_index}")
 
     # Add debris and noise
-    num_debris = 500
+    num_debris = num_debris
     for _ in range(num_debris):
         shape_type = random.choice(['circle', 'ellipse'])
         reflectivity = random.uniform(0.01, 0.05)  # Adjusting reflectivity for better detection
