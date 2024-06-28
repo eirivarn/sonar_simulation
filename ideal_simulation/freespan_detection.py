@@ -3,59 +3,142 @@ from ideal_simulation.retriving_data_from_sonar import *
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from sklearn.cluster import DBSCAN
 import pyvista as pv
+from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering, SpectralClustering
+from skimage.measure import ransac
+from scipy.optimize import least_squares
 
-def cluster_circle_points(x, y, eps, min_samples):
+
+# Define a simple circle model for RANSAC
+class CircleModel:
+    def __init__(self):
+        self.params = None
+
+    def estimate(self, data):
+        x_m = np.mean(data[:, 0])
+        y_m = np.mean(data[:, 1])
+        radii = np.sqrt((data[:, 0] - x_m) ** 2 + (data[:, 1] - y_m) ** 2)
+        radius = np.mean(radii)
+        self.params = (x_m, y_m, radius)
+        return True
+
+    def residuals(self, data):
+        x_m, y_m, radius = self.params
+        distances = np.sqrt((data[:, 0] - x_m) ** 2 + (data[:, 1] - y_m) ** 2)
+        return np.abs(distances - radius)
+
+    def predict_xy(self, t):
+        x_m, y_m, radius = self.params
+        return (x_m + radius * np.cos(t), y_m + radius * np.sin(t))
+
+def hough_circle_transform(image, dp=1, minDist=100, param1=100, param2=30, minRadius=0, maxRadius=0):
+    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, dp, minDist,
+                               param1=param1, param2=param2,
+                               minRadius=minRadius, maxRadius=maxRadius)
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")
+        return circles
+    return np.array([])
+
+# Function to fit a circle using least squares optimization
+def fit_circle_to_points(x, y):
+    # Initial guess for the circle's center and radius
+    x_m, y_m = np.mean(x), np.mean(y)
+    r_initial = np.mean(np.sqrt((x - x_m)**2 + (y - y_m)**2))
+
+    def residuals(params, x, y):
+        xc, yc, r = params
+        return np.sqrt((x - xc)**2 + (y - yc)**2) - r
+
+    result = least_squares(residuals, [x_m, y_m, r_initial], args=(x, y))
+    xc, yc, radius = result.x
+    return xc, yc, radius
+
+def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
     points = np.column_stack((x, y))
-    clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
+    
+    if algorithm == 'DBSCAN':
+        clustering = DBSCAN(**kwargs).fit(points)
+    elif algorithm == 'KMeans':
+        clustering = KMeans(**kwargs).fit(points)
+    elif algorithm == 'Agglomerative':
+        clustering = AgglomerativeClustering(**kwargs).fit(points)
+    elif algorithm == 'Spectral':
+        clustering = SpectralClustering(**kwargs, affinity='nearest_neighbors').fit(points)
+    elif algorithm == 'RANSAC':
+        model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=1, max_trials=1000)
+        return points[inliers], inliers
+    elif algorithm == 'Hough':
+        # Assuming points are scaled properly into a binary image for demonstration
+        image = np.zeros((1000, 1000), dtype=np.uint8)
+        for point in points:
+            cv2.circle(image, tuple(point.astype(int)), 1, (255), -1)
+        circles = hough_circle_transform(image)
+        return circles  # This will be an array of circle parameters [x_center, y_center, radius]
+    elif algorithm == 'LeastSquares':
+        xc, yc, radius = fit_circle_to_points(x, y)
+        return np.array([(xc, yc, radius)])  # Circle parameters as a single tuple
+
     labels = clustering.labels_
+    unique_labels = set(labels) - {-1} if -1 in labels else set(labels)
 
-    # Identify cluster labels (ignore noise points labeled as -1)
-    unique_labels = set(labels) - {-1}
-
-    # Assuming the largest cluster by count that is not noise is the circle
     if unique_labels:
         main_label = max(unique_labels, key=lambda label: (labels == label).sum())
         circle_points = points[labels == main_label]
         return circle_points, labels == main_label
-    return np.array([]), np.zeros_like(labels, dtype=bool)  # No valid circle found
+    return np.array([]), np.zeros_like(labels, dtype=bool)
 
-def plot_points(x, y, circle_mask):
-    fig, ax = plt.subplots()
-    # Plot all points in gray
-    ax.scatter(x, y, color='gray', label='Non-circle points')
-    # Highlight circle points in red
-    if np.any(circle_mask):
-        ax.scatter(x[circle_mask], y[circle_mask], color='red', label='Circle points')
-
-    ax.set_aspect('equal', adjustable='box')  # Ensure same scale on both axes
+def plot_and_save_points(x, y, mask, title, folder):
+    plt.figure()
+    plt.scatter(x, y, color='gray', label='Non-circle points')
+    if np.any(mask):
+        plt.scatter(x[mask], y[mask], color='red', label='Circle points')
+    plt.gca().set_aspect('equal', adjustable='box')
     plt.xlabel('X coordinate')
     plt.ylabel('Y coordinate')
-    plt.title('Clustered Circle Points')
+    plt.title(title)
     plt.legend()
     plt.grid(True)
-    plt.show()
-
-def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, eps, min_samples):
-    terrain = pv.read(mesh_path)
-
+    
     # Ensure the directory exists
-    os.makedirs("images", exist_ok=True)
-    filename = f"images/position_{slice_position}.png"
+    os.makedirs(folder, exist_ok=True)
+    file_path = os.path.join(folder, f'{title}.png')
+    plt.savefig(file_path)
+    plt.close()  # Close the plot to free up memory
 
-    # Extract 2D slice from the mesh
+def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, clustering_params):
+    terrain = pv.read(mesh_path)
+    images_folder = "images/clustering_algorithms"
+    os.makedirs(images_folder, exist_ok=True)
+
     slice_df = extract_2d_slice_from_mesh(terrain, slice_position, axis='x')
-
     if slice_df is not None:
         theta, distances = get_sonar_2d_plot(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays)
-        
-        # Calculate x and y using polar to Cartesian conversion
-        x = -np.array(distances * np.sin(theta))
+        x = -np.array(distances * np.sin(theta))*2 # Adjust for your needs
         y = np.array(distances * np.cos(theta))
-        
-        # Cluster points and identify potential circle points
-        circle_points, circle_mask = cluster_circle_points(x, y, eps, min_samples)
-        plot_points(x, y, circle_mask)
+
+        titles = ['DBSCAN', 'KMeans', 'Agglomerative', 'Spectral', 'RANSAC', 'LeastSquares']  # Added 'LeastSquares'
+
+        for alg in titles:
+            if alg == 'LeastSquares':
+                # Handle the least squares fit specially
+                xc, yc, radius = fit_circle_to_points(x, y)
+                # Assume we want to display the circle and the points
+                mask = np.zeros(len(x), dtype=bool)
+                plt.figure()
+                plt.scatter(x, y, color='gray', label='Points')
+                circle = plt.Circle((xc, yc), radius, color='r', fill=False, label='Fitted Circle')
+                plt.gca().add_artist(circle)
+                plt.gca().set_aspect('equal', adjustable='box')
+                plt.xlabel('X coordinate')
+                plt.ylabel('Y coordinate')
+                plt.title('Least Squares Fit')
+                plt.legend()
+                plt.grid(True)
+                plt.savefig(os.path.join(images_folder, 'LeastSquares.png'))
+                plt.close()
+            else:
+                points, mask = cluster_circle_points(x, y, algorithm=alg, **clustering_params.get(alg, {}))
+                plot_and_save_points(x, y, mask, alg, images_folder)
     else:
         print("No data slice found for the given position.")

@@ -24,9 +24,12 @@ def main():
     slice_positions = list(range(-25, 25, 5))
     
     # Clustering parameters
-    eps = 10               # Maximum distance between two samples for one to be considered as in the neighborhood of the other
-    min_samples = 5        # The number of samples in a neighborhood for a point to be considered as a core point
-    
+    clustering_params = {
+    'DBSCAN': {'eps': 10, 'min_samples': 40},
+    'KMeans': {'n_clusters': 6, 'random_state': 42},
+    'Agglomerative': {'n_clusters': 3},
+    'Spectral': {'n_clusters': 3, 'random_state': 42, 'n_neighbors': 10}
+}
     # ************ Run Basic Simulation ************
     # run_ideal_basic_sonar_simulation(simulation_dimensions, pipe_center, pipe_radius, sonar_positions[1], angles[1], max_range, angle_width, num_rays)
     
@@ -43,7 +46,7 @@ def main():
     # save_sonar_image(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays)
     
     # ************ Run Sonar Simulation with Clustering ************
-    run_sonar_simulation_with_clustering(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays, eps, min_samples)
+    run_sonar_simulation_with_clustering(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays, clustering_params)
 
     
 if __name__ == "__main__":
