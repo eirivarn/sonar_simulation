@@ -1,10 +1,10 @@
-from ideal_simulation.terrain_sonar_scann import *  
+from ideal_simulation.terrain_sonar_scann import *
 from ideal_simulation.retriving_data_from_sonar import *
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pyvista as pv
-from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering, SpectralClustering
+from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
 from skimage.measure import ransac
 from scipy.optimize import least_squares
 
@@ -94,6 +94,27 @@ def plot_and_save_points(x, y, mask, title, folder):
     plt.savefig(file_path)
     plt.close()  # Close the plot to free up memory
 
+def plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, folder):
+    plt.figure()
+    plt.scatter(x, y, color='gray', label='Non-circle points')
+    plt.scatter(x[common_mask], y[common_mask], color='red', label='Common circle points')
+    theta = np.linspace(0, 2 * np.pi, 100)
+    x_circle = xc + radius * np.cos(theta)
+    y_circle = yc + radius * np.sin(theta)
+    plt.plot(x_circle, y_circle, color='blue', label='Fitted circle')
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.xlabel('X coordinate')
+    plt.ylabel('Y coordinate')
+    plt.title('All Points with Fitted Circle')
+    plt.legend()
+    plt.grid(True)
+    
+    # Ensure the directory exists
+    os.makedirs(folder, exist_ok=True)
+    file_path = os.path.join(folder, 'All_Points_with_Fitted_Circle.png')
+    plt.savefig(file_path)
+    plt.close()  # Close the plot to free up memory
+
 def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, clustering_params):
     terrain = pv.read(mesh_path)
     images_folder = "images/clustering_algorithms"
@@ -106,9 +127,25 @@ def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, 
         y = np.array(distances * np.cos(theta))
 
         titles = ['DBSCAN', 'KMeans', 'Agglomerative', 'RANSAC']
+        circle_points_dict = {}
 
         for alg in titles:
             points, mask = cluster_circle_points(x, y, algorithm=alg, **clustering_params.get(alg, {}))
+            circle_points_dict[alg] = points
             plot_and_save_points(x, y, mask, alg, images_folder)
+        
+        # Identify common points across all clustering algorithms
+        all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in titles])
+        common_mask = all_masks.all(axis=1)
+        common_points = np.column_stack((x, y))[common_mask]
+        
+        if len(common_points) > 0:
+            xc, yc, radius = fit_circle_to_points(common_points[:, 0], common_points[:, 1])
+            print(f"Fitted Circle: Center = ({xc}, {yc}), Radius = {radius}")
+            plot_and_save_points(x, y, common_mask, 'Common Circle Points', images_folder)
+            plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, images_folder)
+        else:
+            print("No common points found among all clustering algorithms.")
     else:
         print("No data slice found for the given position.")
+
