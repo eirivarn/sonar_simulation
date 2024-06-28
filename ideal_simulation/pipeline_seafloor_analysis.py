@@ -6,6 +6,7 @@ from ideal_simulation.seafloor_detection import *
 import numpy as np
 import pyvista as pv
 import os
+
 def calculate_enclosed_area(curve_x, curve_y, xc, yc, radius):
     # Define the curve and circle geometries
     curve = LineString(np.column_stack([curve_x, curve_y]))
@@ -44,7 +45,7 @@ def calculate_enclosed_area(curve_x, curve_y, xc, yc, radius):
     
     return 0, 0, None  # No significant intersection or error handling
 
-def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, clustering_params):
+def run_pipeline_seafloor_detection(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, clustering_params):
     terrain = pv.read(mesh_path)
     images_folder = "images/clustering_algorithms"
     os.makedirs(images_folder, exist_ok=True)
@@ -52,7 +53,7 @@ def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, 
     slice_df = extract_2d_slice_from_mesh(terrain, slice_position, axis='x')
     if slice_df is not None:
         theta, distances = get_sonar_2d_plot(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays)
-        x = -np.array(distances * np.sin(theta)) * 2  # Adjust this factor as needed
+        x = -np.array(distances * np.sin(theta)) *2  # Adjust this factor as needed
         y = np.array(distances * np.cos(theta))
 
         x_filtered, y_filtered = remove_most_common_y_value_with_margin(x, y)

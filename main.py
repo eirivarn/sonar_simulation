@@ -2,7 +2,7 @@ from ideal_simulation.basic_sonar import run_ideal_basic_sonar_simulation
 from ideal_simulation.multiple_sonar import run_ideal_multiple_sonar_simulation
 from ideal_simulation.terrain_sonar_scann import run_ideal_mesh_sonar_scann_simulation
 from ideal_simulation.terrain_sonar_mapping import run_ideal_mesh_sonar_mapping_simulation
-from ideal_simulation.freespan_detection import run_sonar_simulation_with_clustering
+from ideal_simulation.pipeline_seafloor_analysis import run_pipeline_seafloor_detection
 from ideal_simulation.retriving_data_from_sonar import save_sonar_image
 
 def main():
@@ -45,7 +45,7 @@ def main():
     # save_sonar_image(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays)
     
     # ************ Run Sonar Simulation with Clustering ************
-    run_sonar_simulation_with_clustering(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays, clustering_params)
+    run_pipeline_seafloor_detection(mesh_path, slice_position, simulation_dimensions, sonar_positions[1], angles[1], max_range, angle_width, num_rays, clustering_params)
 
     
 if __name__ == "__main__":
