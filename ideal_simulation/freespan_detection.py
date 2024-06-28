@@ -64,7 +64,7 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
     elif algorithm == 'Agglomerative':
         clustering = AgglomerativeClustering(**kwargs).fit(points)
     elif algorithm == 'RANSAC':
-        model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=1, max_trials=1000)
+        model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=11, max_trials=1000)
         return points[inliers], inliers
 
     labels = clustering.labels_
