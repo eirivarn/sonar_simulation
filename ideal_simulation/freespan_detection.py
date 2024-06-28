@@ -6,13 +6,6 @@ import os
 from sklearn.cluster import DBSCAN
 import pyvista as pv
 
-def extract_points_from_binary_map(binary_map):
-    points = np.argwhere(binary_map == 1)
-    # Convert from matrix indices to coordinates
-    x = points[:, 1]
-    y = binary_map.shape[0] - points[:, 0]
-    return x, y
-
 def cluster_circle_points(x, y, eps, min_samples):
     points = np.column_stack((x, y))
     clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(points)
@@ -35,7 +28,8 @@ def plot_points(x, y, circle_mask):
     # Highlight circle points in red
     if np.any(circle_mask):
         ax.scatter(x[circle_mask], y[circle_mask], color='red', label='Circle points')
-    ax.set_aspect('equal', adjustable='datalim')
+
+    ax.set_aspect('equal', adjustable='box')  # Ensure same scale on both axes
     plt.xlabel('X coordinate')
     plt.ylabel('Y coordinate')
     plt.title('Clustered Circle Points')
@@ -43,26 +37,25 @@ def plot_points(x, y, circle_mask):
     plt.grid(True)
     plt.show()
 
-def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angle, max_range, angle_width, num_rays, eps, min_samples):
+def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, eps, min_samples):
     terrain = pv.read(mesh_path)
 
     # Ensure the directory exists
-    os.makedirs("sonar_results", exist_ok=True)
-    filename = f"sonar_results/position_{slice_position}.png"
+    os.makedirs("images", exist_ok=True)
+    filename = f"images/position_{slice_position}.png"
 
     # Extract 2D slice from the mesh
     slice_df = extract_2d_slice_from_mesh(terrain, slice_position, axis='x')
 
     if slice_df is not None:
-        binary_map = create_binary_map_from_slice(dimensions, slice_df)
-
-        # Extract (x, y) points from the binary map
-        x, y = extract_points_from_binary_map(binary_map)
-
+        theta, distances = get_sonar_2d_plot(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays)
+        
+        # Calculate x and y using polar to Cartesian conversion
+        x = -np.array(distances * np.sin(theta))
+        y = np.array(distances * np.cos(theta))
+        
         # Cluster points and identify potential circle points
         circle_points, circle_mask = cluster_circle_points(x, y, eps, min_samples)
-
-        # Plot the results
         plot_points(x, y, circle_mask)
     else:
         print("No data slice found for the given position.")

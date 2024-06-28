@@ -35,14 +35,14 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
         ray_angle_rad = np.radians(ray_angle)
         theta.append(ray_angle_rad)
 
-        for r in range(max_range):
-            x = int(pos[0] + r * np.cos(ray_angle_rad))
-            y = int(pos[1] + r * np.sin(ray_angle_rad))
+        for ray_distance in range(max_range):
+            x = int(pos[0] + ray_distance * np.cos(ray_angle_rad))
+            y = int(pos[1] + ray_distance * np.sin(ray_angle_rad))
             if x < 0 or x >= rows or y < 0 or y >= cols:
-                sonar_data.append((r, 0))  # No detection gives weaker signal
+                sonar_data.append((ray_distance, 0))  # No detection gives weaker signal
                 break
             if room[x, y] >= 0.5:
-                sonar_data.append((r, 1))  # Detection gives stronger signal
+                sonar_data.append((ray_distance, 1))  # Detection gives stronger signal
                 break
         else:
             sonar_data.append((max_range, 0))  # Max range without hit

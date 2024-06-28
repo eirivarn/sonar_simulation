@@ -30,12 +30,12 @@ def create_binary_map_from_slice(dimensions, slice_df):
     min_y, max_y = slice_df['Y'].min(), slice_df['Y'].max()
 
     # Calculate scaling factors
-    scale_x = (dimensions[0] / (max_x - min_x))/6
+    scale_x = (dimensions[0] / (max_x - min_x))/6 #TODO remove hardcoded value
     scale_y = (dimensions[1] / (max_y - min_y))
 
     for _, row in slice_df.iterrows():
         x, y = row['Z'], row['Y']  # Use Z instead of X
-        x_index = int((x - min_x) * scale_x+800)
+        x_index = int((x - min_x) * scale_x+800) #TODO remove hardcoded value
         y_index = int((y - min_y) * scale_y)
         x_index = dimensions[0] - 1 - x_index  # Flip x-coordinate
         y_index = dimensions[1] - 1 - y_index  # Flip y-coordinate

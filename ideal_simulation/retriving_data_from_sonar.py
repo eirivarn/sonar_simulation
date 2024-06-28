@@ -46,8 +46,8 @@ def save_sonar_image(mesh_path, position, dimensions, sonar_position, angle, max
         print("No slice data available to display.")
         return None
 
-def get_sonar_binary_map(mesh_path, position, dimensions, sonar_position, angle, max_range, angle_width, num_rays):
-    """ Return the sonar data as a binary map. """
+def get_sonar_2d_plot(mesh_path, position, dimensions, sonar_position, angle, max_range, angle_width, num_rays):
+    """ Return a 2D plot of the sonar data with transformed theta values to match distance scale. """
     terrain = pv.read(mesh_path)
     rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
     terrain.points = terrain.points.dot(rotation_matrix)
@@ -60,7 +60,9 @@ def get_sonar_binary_map(mesh_path, position, dimensions, sonar_position, angle,
         
         # Perform ray-casting on the binary map
         sonar_data, theta = ray_cast(binary_map, sonar_position, angle, max_range, angle_width, num_rays)
-        return sonar_data, theta, binary_map
+        distances = [data[0] for data in sonar_data]
+        
+        return theta, distances
     else:
         print("No slice data available to display.")
-        return None, None, None
+        return None, None
