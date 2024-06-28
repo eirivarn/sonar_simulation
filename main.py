@@ -25,9 +25,9 @@ def main():
     
     # Clustering parameters
     clustering_params = {
-    'DBSCAN': {'eps': 10, 'min_samples': 40},
+    'DBSCAN': {'eps': 16, 'min_samples': 3},
     'KMeans': {'n_clusters': 6, 'random_state': 42},
-    'Agglomerative': {'n_clusters': 3},
+    'Agglomerative': {'n_clusters': 8},
     'Spectral': {'n_clusters': 3, 'random_state': 42, 'n_neighbors': 10}
 }
     # ************ Run Basic Simulation ************
