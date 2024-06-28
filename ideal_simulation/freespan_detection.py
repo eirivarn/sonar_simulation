@@ -30,15 +30,7 @@ class CircleModel:
     def predict_xy(self, t):
         x_m, y_m, radius = self.params
         return (x_m + radius * np.cos(t), y_m + radius * np.sin(t))
-
-def hough_circle_transform(image, dp=2, minDist=10, param1=100, param2=30, minRadius=0, maxRadius=0):
-    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, dp, minDist,
-                               param1=param1, param2=param2,
-                               minRadius=minRadius, maxRadius=maxRadius)
-    if circles is not None:
-        circles = np.round(circles[0, :]).astype("int")
-        return circles
-    return np.array([])
+    
 
 # Function to fit a circle using least squares optimization
 def fit_circle_to_points(x, y):
@@ -115,6 +107,17 @@ def plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, fold
     plt.savefig(file_path)
     plt.close()  # Close the plot to free up memory
 
+def remove_most_common_y_value_with_margin(x, y, margin=2.0): #TODO Make a better system than hardcoded margin. Hard to tune clustering
+    # Create a histogram of y values with a specified bin size (margin)
+    hist, bin_edges = np.histogram(y, bins=np.arange(min(y), max(y) + margin, margin))
+    # Find the bin with the highest frequency
+    most_common_bin_index = np.argmax(hist)
+    most_common_y = bin_edges[most_common_bin_index]
+    # Create a mask to filter out points within the margin of the most common y value
+    mask = (y < (most_common_y - margin / 2)) | (y > (most_common_y + margin / 2))
+    return x[mask], y[mask]
+
+
 def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays, clustering_params):
     terrain = pv.read(mesh_path)
     images_folder = "images/clustering_algorithms"
@@ -123,27 +126,31 @@ def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, 
     slice_df = extract_2d_slice_from_mesh(terrain, slice_position, axis='x')
     if slice_df is not None:
         theta, distances = get_sonar_2d_plot(mesh_path, slice_position, dimensions, sonar_position, angles, max_range, angle_width, num_rays)
-        x = -np.array(distances * np.sin(theta))*2 # Adjust for your needs
+        x = -np.array(distances * np.sin(theta)) * 2  # Adjust for your needs
         y = np.array(distances * np.cos(theta))
 
-        titles = ['DBSCAN', 'KMeans', 'Agglomerative', 'RANSAC']
+        # Remove points with the most common rounded y value and return original coordinates
+        x_filtered, y_filtered = remove_most_common_y_value_with_margin(x, y)
+
+        
+        titles = ['DBSCAN','RANSAC']
         circle_points_dict = {}
 
         for alg in titles:
-            points, mask = cluster_circle_points(x, y, algorithm=alg, **clustering_params.get(alg, {}))
+            points, mask = cluster_circle_points(x_filtered, y_filtered, algorithm=alg, **clustering_params.get(alg, {}))
             circle_points_dict[alg] = points
-            plot_and_save_points(x, y, mask, alg, images_folder)
-        
+            plot_and_save_points(x_filtered, y_filtered, mask, alg, images_folder)
+
         # Identify common points across all clustering algorithms
-        all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in titles])
+        all_masks = np.column_stack([np.isin(np.column_stack((x_filtered, y_filtered)), circle_points_dict[alg]).all(axis=1) for alg in titles])
         common_mask = all_masks.all(axis=1)
-        common_points = np.column_stack((x, y))[common_mask]
-        
+        common_points = np.column_stack((x_filtered, y_filtered))[common_mask]
+
         if len(common_points) > 0:
             xc, yc, radius = fit_circle_to_points(common_points[:, 0], common_points[:, 1])
             print(f"Fitted Circle: Center = ({xc}, {yc}), Radius = {radius}")
-            plot_and_save_points(x, y, common_mask, 'Common Circle Points', images_folder)
-            plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, images_folder)
+            plot_and_save_points(x_filtered, y_filtered, common_mask, 'Common Circle Points', images_folder)
+            plot_and_save_all_points_with_circle(x_filtered, y_filtered, common_mask, xc, yc, radius, images_folder)
         else:
             print("No common points found among all clustering algorithms.")
     else:

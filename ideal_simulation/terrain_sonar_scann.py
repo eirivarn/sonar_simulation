@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from ideal_simulation.multiple_sonar import ray_cast, plot_both_views
 
+#TODO Make this use interpolation for complete terrain
+
 def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     # Define axis normals and adjust origin dynamically
     axes = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}

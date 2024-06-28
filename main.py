@@ -26,8 +26,8 @@ def main():
     # Clustering parameters
     clustering_params = {
     'DBSCAN': {'eps': 16, 'min_samples': 3},
-    'KMeans': {'n_clusters': 6, 'random_state': 42},
-    'Agglomerative': {'n_clusters': 8}}
+    'KMeans': {'n_clusters': 2, 'random_state': 42},
+    'Agglomerative': {'n_clusters': 2}}
 
     # ************ Run Basic Simulation ************
     # run_ideal_basic_sonar_simulation(simulation_dimensions, pipe_center, pipe_radius, sonar_positions[1], angles[1], max_range, angle_width, num_rays)
