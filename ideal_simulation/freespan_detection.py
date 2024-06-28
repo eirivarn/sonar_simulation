@@ -63,8 +63,6 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
         clustering = KMeans(**kwargs).fit(points)
     elif algorithm == 'Agglomerative':
         clustering = AgglomerativeClustering(**kwargs).fit(points)
-    elif algorithm == 'Spectral':
-        clustering = SpectralClustering(**kwargs, affinity='nearest_neighbors').fit(points)
     elif algorithm == 'RANSAC':
         model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=1, max_trials=1000)
         return points[inliers], inliers
@@ -107,7 +105,7 @@ def run_sonar_simulation_with_clustering(mesh_path, slice_position, dimensions, 
         x = -np.array(distances * np.sin(theta))*2 # Adjust for your needs
         y = np.array(distances * np.cos(theta))
 
-        titles = ['DBSCAN', 'KMeans', 'Agglomerative', 'Spectral', 'RANSAC']
+        titles = ['DBSCAN', 'KMeans', 'Agglomerative', 'RANSAC']
 
         for alg in titles:
             points, mask = cluster_circle_points(x, y, algorithm=alg, **clustering_params.get(alg, {}))
