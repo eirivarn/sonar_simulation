@@ -3,6 +3,7 @@ from skimage.measure import ransac
 from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
 from scipy.optimize import least_squares
 
+#TODO Tune circle algorithms 
 
 class CircleModel:
     def __init__(self):
@@ -47,7 +48,7 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
     elif algorithm == 'Agglomerative':
         clustering = AgglomerativeClustering(**kwargs).fit(points)
     elif algorithm == 'RANSAC':
-        model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=11, max_trials=1000)
+        model, inliers = ransac(points, CircleModel, min_samples=20, residual_threshold=50, max_trials=1000)
         return points[inliers], inliers
 
     labels = clustering.labels_

@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
 
-def remove_most_common_y_value_with_margin(x, y, margin=2.0):
+#TODO interpolate seafloor
+
+def remove_most_common_y_value_with_margin(x, y, margin=3.0):
     hist, bin_edges = np.histogram(y, bins=np.arange(min(y), max(y) + margin, margin))
     most_common_bin_index = np.argmax(hist)
     most_common_y = bin_edges[most_common_bin_index]
@@ -16,7 +18,7 @@ def exclude_points_near_circle(x, y, xc, yc, radius, margin=25.0):
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def exclude_outliers(x, y, spline, threshold=2.0):
+def exclude_outliers(x, y, spline, threshold=5.0):
     residuals = y - spline(x)
     mask = np.abs(residuals) < threshold
     return x[mask], y[mask]
@@ -30,7 +32,7 @@ Outlier threshold is a parameter that controls the maximum residual value allowe
     A smaller value of outlier threshold will result in more points being considered as outliers
     A larger value of outlier threshold will result in fewer points being considered as outliers
 """
-def interpolate_remaining_points(x, y, smoothing_factor=0.9, outlier_threshold=10.0):
+def interpolate_remaining_points(x, y, smoothing_factor=10.0, outlier_threshold=0.5):
 
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]

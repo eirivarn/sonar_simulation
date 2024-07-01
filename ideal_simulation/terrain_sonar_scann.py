@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from ideal_simulation.multiple_sonar import ray_cast, plot_both_views
 
-#TODO Make this use interpolation for complete terrain
 
 def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     # Define axis normals and adjust origin dynamically
@@ -74,8 +73,20 @@ def run_ideal_mesh_sonar_scann_simulation(mesh_path, dimensions, axis, position,
             all_sonar_data.append(sonar_data)
             all_theta.append(theta)
 
+        x_values = []
+        y_values = []
+        
         # Visualize both views
-        plot_both_views(binary_map, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
+        transformed_coords = plot_both_views(binary_map, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
+        
+        for (r, t, strength) in transformed_coords:
+            if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
+                x = np.array(r * np.sin(t))
+                x_values.append(x)
+                y = np.array(r * np.cos(t))
+                y_values.append(y)
+                
+        return x_values, y_values
     else:
         print("No slice data available to display.")
         

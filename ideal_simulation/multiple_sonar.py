@@ -44,7 +44,7 @@ def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
 
     return transformed_coords
 
-def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta):
+def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, plot=True):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -67,28 +67,30 @@ def plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, 
         global_coords.extend(transform_to_global(pos, sonar_data, theta))
 
     # Use the first sonar as the reference sonar
-    ref_pos = sonar_positions[1]
-    ref_angle = angles[1]
+    ref_pos = sonar_positions[0]
+    ref_angle = angles[0]
 
     # Transform all global coordinates to the reference sonar's coordinate system
     transformed_coords = transform_to_reference_sonar(ref_pos, ref_angle, global_coords)
+    if plot==True:
+        # Plot for sonar image view as a cone
+        ax2 = plt.subplot(122, projection='polar')
+        ax2.set_theta_zero_location('S')  # Set zero angle to the top (straight up)
+        ax2.set_theta_direction(-1)
+        ax2.set_ylim(0, max_range)
+        ax2.set_xlim(-np.radians(angle_width / 2), np.radians(angle_width / 2))  # Center the sonar field of view
+        ax2.set_title('Sonar Image')
+        ax2.set_facecolor('white')
 
-    # Plot for sonar image view as a cone
-    ax2 = plt.subplot(122, projection='polar')
-    ax2.set_theta_zero_location('S')  # Set zero angle to the top (straight up)
-    ax2.set_theta_direction(-1)
-    ax2.set_ylim(0, max_range)
-    ax2.set_xlim(-np.radians(angle_width / 2), np.radians(angle_width / 2))  # Center the sonar field of view
-    ax2.set_title('Sonar Image')
-    ax2.set_facecolor('white')
+        colors = viridis(np.linspace(0, 1, max_range))
+        for (r, t, strength) in transformed_coords:
+            if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
+                color = colors[int(r * strength)]
+                ax2.scatter(t, r, color=color, s=10 * strength + 1)
 
-    colors = viridis(np.linspace(0, 1, max_range))
-    for (r, t, strength) in transformed_coords:
-        if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
-            color = colors[int(r * strength)]
-            ax2.scatter(t, r, color=color, s=10 * strength + 1)
-
-    plt.show()
+        plt.show()
+    
+    return transformed_coords
 
 def run_ideal_multiple_sonar_simulation(dimensions, pipe_center, pipe_radius, sonar_positions, angles, max_range, angle_width, num_rays):
     """ Run a basic sonar simulation with given parameters. """
