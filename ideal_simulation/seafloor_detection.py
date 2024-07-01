@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
-from shapely.geometry import LineString, Point, Polygon, GeometryCollection
-from shapely.ops import unary_union
+from shapely.geometry import LineString, Point, Polygon
 import os
 
 def remove_most_common_y_value_with_margin(x, y, margin=2.0):
@@ -12,18 +11,39 @@ def remove_most_common_y_value_with_margin(x, y, margin=2.0):
     mask = (y < (most_common_y - margin / 2)) | (y > (most_common_y + margin / 2))
     return x[mask], y[mask]
 
-def exclude_points_near_circle(x, y, xc, yc, radius, margin=10.0):
+def exclude_points_near_circle(x, y, xc, yc, radius, margin=25.0):
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def interpolate_remaining_points(x, y):
+def exclude_outliers(x, y, spline, threshold=2.0):
+    residuals = y - spline(x)
+    mask = np.abs(residuals) < threshold
+    return x[mask], y[mask]
+
+"""
+Smoothing factor is a parameter that controls the trade-off between fitting the data and smoothing the curve
+    A smaller value of smoothing factor will result in a curve that passes through more points
+    A larger value of smoothing factor will result in a smoother curve that may not pass through all point
+
+Outlier threshold is a parameter that controls the maximum residual value allowed for a point to be considered an outlier
+    A smaller value of outlier threshold will result in more points being considered as outliers
+    A larger value of outlier threshold will result in fewer points being considered as outliers
+"""
+def interpolate_remaining_points(x, y, smoothing_factor=0.9, outlier_threshold=10.0):
+
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
-    spline = UnivariateSpline(x_sorted, y_sorted, s=0.5)
-    x_new = np.linspace(x_sorted.min(), x_sorted.max(), 500)
+
+    spline = UnivariateSpline(x_sorted, y_sorted, s=smoothing_factor)
+    x_filtered, y_filtered = exclude_outliers(x_sorted, y_sorted, spline, outlier_threshold)
+    
+    # Re-fit the spline without outliers
+    spline = UnivariateSpline(x_filtered, y_filtered, s=smoothing_factor)
+    x_new = np.linspace(x_filtered.min(), x_filtered.max(), 500)
     y_new = spline(x_new)
+    
     return x_new, y_new
 
 def plot_and_save_points(x, y, mask, title, folder):
