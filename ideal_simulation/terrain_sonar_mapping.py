@@ -1,7 +1,7 @@
 import pyvista as pv
 import numpy as np
 import matplotlib.pyplot as plt
-from ideal_simulation.terrain_sonar_scan import extract_2d_slice_from_mesh, create_binary_map
+from ideal_simulation.terrain_sonar_scan import extract_2d_slice_from_mesh
 
 def ray_cast(room, pos, angle, max_range, angle_width, num_rays):
     """ Perform ray-casting to simulate sonar data and return hit coordinates. """

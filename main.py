@@ -8,13 +8,13 @@ from ideal_simulation.pipeline_seafloor_analysis import run_pipeline_seafloor_de
 
 def main():
     # ************ Simulation Parameters ************
-    pipe_center = (30, 500)  # (y, x)
+    pipe_center = (100, 500)  # center of the pipe (y, x)
     pipe_radius = 50  
+    simulation_dimensions = (500, 1000)   # (y, x)  
+    sonar_positions = [(250, 250), (450, 450), (250, 850)] # (x, y)
 
-    sonar_positions = [(500, 500), (250, 250), (250, 850)]
-    
-    angles = [180, 110, 240]  # direction in degrees (mid-point direction pointing down)
-    max_range = 600
+    angles = [110, 180, 240]  # direction in degrees (mid-point direction pointing down)
+    max_range = 500
     angle_width = 60  # total sonar angle width in degrees
     num_rays = 100  # number of rays for higher resolution
 
@@ -36,7 +36,7 @@ def main():
     # run_ideal_multiple_sonar_simulation(simulation_dimensions, pipe_center, pipe_radius, sonar_positions, angles, max_range, angle_width, num_rays)
     
     # ************ Run Mesh Sonar Simulation ************
-    run_ideal_mesh_sonar_scan_simulation(mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
+    run_ideal_mesh_sonar_scan_simulation(seperate_mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
     
     # ************ Run Mesh Sonar Mapping Simulation ************
     # run_ideal_mesh_sonar_mapping_simulation(mesh_path, simulation_dimensions, 'x', slice_positions, sonar_positions, angles, max_range, angle_width, num_rays)

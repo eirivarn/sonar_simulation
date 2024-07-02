@@ -55,18 +55,29 @@ seafloor_slice_df = extract_2d_slice_from_mesh(seafloor_mesh, slice_position, sl
 
 # Automatically determine the range and grid size
 def determine_range_and_grid_size(df, grid_resolution=500):
+    # Default values if DataFrame is None or empty
     if df is None or df.empty:
-        return (-100, 100), (-100, 100), (grid_resolution, grid_resolution)  # Default values
+        return (-100, 100), (-100, 100), (grid_resolution, grid_resolution)
 
+    # Extract the minimum and maximum values from 'Y' and 'Z' columns
     min_y, max_y = df['Y'].min(), df['Y'].max()
     min_z, max_z = df['Z'].min(), df['Z'].max()
     
+    # Define the ranges for Y and Z
     y_range = (min_y, max_y)
     z_range = (min_z, max_z)
 
-    grid_size_y = int((max_y - min_y) / (max_y - min_y) * grid_resolution)
-    grid_size_z = int((max_z - min_z) / (max_z - min_z) * grid_resolution)
+    # Calculate the grid size for each axis
+    if max_y != min_y:
+        grid_size_y = int(grid_resolution)
+    else:
+        grid_size_y = grid_resolution
     
+    if max_z != min_z:
+        grid_size_z = int(grid_resolution)
+    else:
+        grid_size_z = grid_resolution
+
     return y_range, z_range, (grid_size_y, grid_size_z)
 
 # Determine range and grid size for both slices
