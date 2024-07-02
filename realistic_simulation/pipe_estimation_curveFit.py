@@ -1,4 +1,4 @@
-from ideal_simulation.terrain_sonar_scann import *  # Assuming this imports necessary packages and functions
+from ideal_simulation.terrain_sonar_scan import *  # Assuming this imports necessary packages and functions
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN

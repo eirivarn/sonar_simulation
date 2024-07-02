@@ -1,7 +1,7 @@
-from ideal_simulation.terrain_sonar_scann import *
+from ideal_simulation.terrain_sonar_scan import *
 from ideal_simulation.circle_detection import *
 from ideal_simulation.seafloor_detection import *
-from ideal_simulation.terrain_sonar_scann import run_ideal_mesh_sonar_scann_simulation
+from ideal_simulation.terrain_sonar_scan import run_ideal_mesh_sonar_scan_simulation
 
 import numpy as np
 import pyvista as pv

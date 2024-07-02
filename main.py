@@ -1,13 +1,13 @@
 from ideal_simulation.basic_sonar import run_ideal_basic_sonar_simulation
 from ideal_simulation.multiple_sonar import run_ideal_multiple_sonar_simulation
-from ideal_simulation.terrain_sonar_scann import run_ideal_mesh_sonar_scann_simulation
+from ideal_simulation.terrain_sonar_scan import run_ideal_mesh_sonar_scan_simulation
 from ideal_simulation.terrain_sonar_mapping import run_ideal_mesh_sonar_mapping_simulation
 from ideal_simulation.pipeline_seafloor_analysis import run_pipeline_seafloor_detection
+#from ideal_simulation.detection_evaluation import * 
+
 
 def main():
     # ************ Simulation Parameters ************
-    simulation_dimensions = (1000, 1000)  # Dimensions of the simulation room
-
     pipe_center = (30, 500)  # (y, x)
     pipe_radius = 50  
 
@@ -18,7 +18,8 @@ def main():
     angle_width = 60  # total sonar angle width in degrees
     num_rays = 100  # number of rays for higher resolution
 
-    mesh_path = '/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj'
+    mesh_paths = ['/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj']
+    seperate_mesh_paths = ['/Users/eirikvarnes/code/blender/pipeline.obj', '/Users/eirikvarnes/code/blender/seafloor.obj']
     slice_position = -10
     slice_positions = list(range(-25, 25, 5))
     
@@ -35,7 +36,7 @@ def main():
     # run_ideal_multiple_sonar_simulation(simulation_dimensions, pipe_center, pipe_radius, sonar_positions, angles, max_range, angle_width, num_rays)
     
     # ************ Run Mesh Sonar Simulation ************
-    # run_ideal_mesh_sonar_scann_simulation(mesh_path, simulation_dimensions, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
+    run_ideal_mesh_sonar_scan_simulation(mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
     
     # ************ Run Mesh Sonar Mapping Simulation ************
     # run_ideal_mesh_sonar_mapping_simulation(mesh_path, simulation_dimensions, 'x', slice_positions, sonar_positions, angles, max_range, angle_width, num_rays)
@@ -44,7 +45,7 @@ def main():
     # save_sonar_image(mesh_path, slice_position, simulation_dimensions, sonar_positions, angles, max_range, angle_width, num_rays)
     
     # ************ Run Sonar Simulation with Clustering ************
-    run_pipeline_seafloor_detection(mesh_path, slice_position, simulation_dimensions, sonar_positions, angles, max_range, angle_width, num_rays, clustering_params)
+    # run_pipeline_seafloor_detection(mesh_path, slice_position, simulation_dimensions, sonar_positions, angles, max_range, angle_width, num_rays, clustering_params)
 
     
 if __name__ == "__main__":

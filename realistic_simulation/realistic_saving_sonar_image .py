@@ -1,4 +1,4 @@
-from ideal_simulation.terrain_sonar_scann import * 
+from ideal_simulation.terrain_sonar_scan import * 
 import cv2
 
 def create_sonar_image(sonar_data, max_range, num_rays):
