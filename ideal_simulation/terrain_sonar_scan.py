@@ -56,7 +56,7 @@ def determine_range_and_grid_size(df, grid_resolution=(200, 200)):
     return y_range, z_range, grid_resolution
 
 def plot_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices'):
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 4))
     unique_labels = np.unique(label_map)
     num_colors = int(unique_labels.max() - unique_labels.min() + 1)
     cmap = plt.get_cmap('viridis', num_colors)
@@ -108,33 +108,34 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
 
         y_range = (min_y, max_y)
         z_range = (min_z, max_z)
-        grid_size = (max_resolution, max_resolution)
-        combined_label_map = np.zeros(grid_size)
 
-        print(f"Final grid size: {grid_size} and ranges Y: {y_range}, Z: {z_range}")
+        # Add padding to the z_range to accommodate sonars above
+        padding_factor = 3  # Factor to extend the z_range
+        padded_z_max = max_z + (max_z - min_z) * padding_factor
+        padded_z_range = (min_z, padded_z_max)
 
-        # Plot each mesh by itself
+        # Create a larger grid to accommodate the padded z_range
+        padded_grid_size = (grid_size[0], int(grid_size[1] * (1 + padding_factor)))
+        combined_label_map = np.zeros(padded_grid_size)
+
+        print(f"Final grid size: {padded_grid_size} and ranges Y: {y_range}, Z: {padded_z_range}")
+
+        # Insert the existing label map into the appropriate portion of the larger grid
         for df in slice_dfs:
             label_map = create_label_map(df, grid_size, y_range, z_range)
             if label_map is not None:
-                plot_label_map(label_map, y_range, z_range, title=f'Label Map of Mesh {int(df["Mesh_ID"].iloc[0])}')
+                combined_label_map[:, :grid_size[1]] = np.maximum(combined_label_map[:, :grid_size[1]], label_map)
 
-        # Combine and plot all meshes together
-        for df in slice_dfs:
-            label_map = create_label_map(df, grid_size, y_range, z_range)
-            if label_map is not None:
-                combined_label_map = np.maximum(combined_label_map, label_map)
-
-        plot_label_map(combined_label_map, y_range, z_range, title='Combined Label Map of All Meshes')
-        print(f"Combined label map created with shape: {combined_label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
+        plot_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
+        print(f"Combined label map created with shape: {combined_label_map.shape} and ranges Y: {y_range}, Z: {padded_z_range}")
 
         all_sonar_data, all_theta = [], []
         for pos, angle in zip(sonar_positions, angles):
-            sonar_data, theta = ray_cast(combined_label_map.T, pos, angle, max_range, angle_width, num_rays, y_range, z_range)
+            sonar_data, theta = ray_cast(combined_label_map.T, pos, angle, max_range, angle_width, num_rays, y_range, padded_z_range)
             all_sonar_data.append(sonar_data)
             all_theta.append(theta)
 
-        transformed_coords = plot_both_views(combined_label_map.T, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
+        transformed_coords = plot_both_views(combined_label_map.T, y_range, padded_z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
         return transformed_coords
     else:
         print("No slice data available for display.")

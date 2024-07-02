@@ -11,10 +11,10 @@ def main():
     pipe_center = (100, 500)  # center of the pipe (y, x)
     pipe_radius = 50  
     simulation_dimensions = (500, 1000)   # (y, x)  
-    sonar_positions = [(250, 250), (450, 450), (250, 850)] # (x, y)
+    sonar_positions = [(10, -15), (10, -10), (10, 0)] # (y, x)
 
     angles = [110, 180, 240]  # direction in degrees (mid-point direction pointing down)
-    max_range = 500
+    max_range = 50000000
     angle_width = 60  # total sonar angle width in degrees
     num_rays = 100  # number of rays for higher resolution
 

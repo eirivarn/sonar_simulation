@@ -44,22 +44,24 @@ def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
 
     return transformed_coords
 
-def plot_both_views(binary_map, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, plot=True):
+def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, plot=True):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot for traditional room view
-    ax1.imshow(binary_map, cmap='gray', origin='lower', interpolation='bilinear')
+    ax1.imshow(world, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), cmap='gray', origin='lower', interpolation='bilinear')
     colors = ['red', 'blue', 'green', 'yellow']
     
     for idx, (pos, sonar_data, theta) in enumerate(zip(sonar_positions, all_sonar_data, all_theta)):
         ax1.scatter([pos[1]], [pos[0]], color=colors[idx % len(colors)])  # Sonar position
         for (r, strength), t in zip(sonar_data, theta):
-            x = pos[0] + r * np.cos(t)
-            y = pos[1] + r * np.sin(t)
-            ax1.plot([pos[1], y], [pos[0], x], color=colors[idx % len(colors)])
+            y = pos[0] + r * np.cos(t)
+            z = pos[1] + r * np.sin(t)
+            ax1.plot([pos[1], z], [pos[0], y], color=colors[idx % len(colors)])
     
     ax1.set_title('Room with Pipe and Ground')
+    ax1.set_xlim(y_range)
+    ax1.set_ylim(z_range)
 
     # Transform all sonar data to global coordinates
     global_coords = []
