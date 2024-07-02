@@ -1,8 +1,59 @@
 import pyvista as pv
 import numpy as np
 import pandas as pd
-from ideal_simulation.multiple_sonar import ray_cast, plot_both_views
+from ideal_simulation.multiple_sonar import plot_both_views
 import matplotlib.pyplot as plt
+
+def ray_cast(labeled_map, pos, angle, max_range, angle_width, num_rays, y_range, z_range):
+    """Perform ray-casting to simulate sonar data using a labeled map, adjusting scales and ranges dynamically."""
+    rows, cols = labeled_map.shape
+
+    # Adjust Z range to include sonar starting position if not already included
+    z_min, z_max = min(z_range[0], pos[1]), max(z_range[1], pos[1])
+    # Recompute scales based on the adjusted range
+    y_scale = (y_range[1] - y_range[0]) / rows
+    z_scale = (z_max - z_min) / cols
+
+    sonar_data = []
+    theta = []
+
+    print(f"Map Dimensions: Rows = {rows}, Columns = {cols}")
+    print(f"Adjusted Y Range = {y_range}, Adjusted Z Range = ({z_min}, {z_max})")
+    print(f"Y Scale = {y_scale}, Z Scale = {z_scale}")
+    print(f"Sonar Position: Y = {pos[0]}, Z = {pos[1]}")
+
+    for i in range(num_rays):
+        ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
+        ray_angle_rad = np.radians(ray_angle)
+        theta.append(ray_angle_rad)
+
+        print(f"\nRay {i}: Angle (Degrees) = {ray_angle}, Angle (Radians) = {ray_angle_rad}")
+
+        for ray_distance in range(max_range):
+            y = pos[0] + ray_distance * np.cos(ray_angle_rad)
+            z = pos[1] + ray_distance * np.sin(ray_angle_rad)
+            y_idx = int((y - y_range[0]) / y_scale)
+            z_idx = int((z - z_min) / z_scale)
+
+            print(f"Ray {i}, Distance {ray_distance}: Y = {y:.2f}, Z = {z:.2f}, Y_idx = {y_idx}, Z_idx = {z_idx}")
+
+            if 0 <= y_idx < rows and 0 <= z_idx < cols:
+                if labeled_map[y_idx, z_idx] > 0:  # Check for a hit with a label
+                    sonar_data.append((ray_distance, labeled_map[y_idx, z_idx]))
+                    print(f"Hit detected at Distance = {ray_distance} with Label = {labeled_map[y_idx, z_idx]}")
+                    break
+            else:
+                # Stop the ray if it goes out of bounds and log the event
+                sonar_data.append((ray_distance, 0))
+                print(f"Ray {i}, Distance {ray_distance}: Out of bounds - Stopped")
+                break
+        else:
+            # Append max range with no detection if no break occurs
+            sonar_data.append((max_range, 0))
+            print(f"Ray {i}: No detection within max range.")
+
+    return sonar_data, theta
+
 
 def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     if axis not in ['x', 'y', 'z']:

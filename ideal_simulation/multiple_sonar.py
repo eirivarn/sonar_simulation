@@ -47,7 +47,7 @@ def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
 def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, plot=True):
     """ Plot both room view and sonar image view as a cone in polar coordinates. """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-
+    
     # Plot for traditional room view
     ax1.imshow(world, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), cmap='gray', origin='lower', interpolation='bilinear')
     colors = ['red', 'blue', 'green', 'yellow']
@@ -110,5 +110,7 @@ def run_ideal_multiple_sonar_simulation(dimensions, pipe_center, pipe_radius, so
         all_sonar_data.append(sonar_data)
         all_theta.append(theta)
 
+    z_range = (0, dimensions[1])
+    y_range = (0, dimensions[0])
     # Visualize both views
-    plot_both_views(room, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
+    plot_both_views(room, y_range, z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
