@@ -29,14 +29,6 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
     rows, cols = binary_map.shape
     sonar_data = []
     theta = []
-    
-    plt.figure(figsize=(8, 8))
-    plt.imshow(binary_map, cmap='gray', origin='lower')
-    plt.colorbar(label='Obstacle Presence (1 = Obstacle, 0 = Free Space)')
-    plt.title('Binary Map Visualization')
-    plt.xlabel('X coordinate')
-    plt.ylabel('Y coordinate')
-    plt.show()
 
     for i in range(num_rays):
         ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
