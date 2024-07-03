@@ -11,12 +11,12 @@ def main():
     pipe_center = (100, 500)  # center of the pipe (y, x)
     pipe_radius = 50  
     simulation_dimensions = (500, 1000)   # (y, x)  
-    sonar_positions = [(500, 500), (750, 750), (1000, 1000)] # (y, x)
+    sonar_positions = [(1000, 1500), (1000, 2000), (1000, 2500)] # (y, x)
 
     angles = [110, 180, 240]  # direction in degrees (mid-point direction pointing down)
-    max_range = 500
+    max_range = 1000
     angle_width = 60  # total sonar angle width in degrees
-    num_rays = 100  # number of rays for higher resolution
+    num_rays = 20  # number of rays for higher resolution
 
     mesh_paths = ['/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj']
     seperate_mesh_paths = ['/Users/eirikvarnes/code/blender/pipeline.obj', '/Users/eirikvarnes/code/blender/seafloor.obj']
