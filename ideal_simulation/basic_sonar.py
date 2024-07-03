@@ -41,9 +41,11 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
             if x < 0 or x >= cols or y < 0 or y >= rows:
                 sonar_data.append((ray_distance, 0))  # No detection gives weaker signal
                 break
+            if binary_map[y, x] >= 1.5:
+                sonar_data.append((ray_distance, 2))
             if binary_map[y, x] >= 0.5:
-                sonar_data.append((ray_distance, 1))  # Detection gives stronger signal
-                break
+                sonar_data.append((ray_distance, 1))  
+                break 
         else:
             sonar_data.append((max_range, 0))  # Max range without hit
     

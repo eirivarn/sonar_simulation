@@ -87,8 +87,9 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
         colors = viridis(np.linspace(0, 1, max_range))
         for (r, t, strength) in transformed_coords:
             if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
-                color = colors[int(r * strength/1.5)]
-                ax2.scatter(t, r, color=color, s=10 * strength)
+                color_index = int((strength - 1) * 10)  # This scales strength 1 to 0 and strength 2 to 10 within the color map
+                color = colors[color_index]
+                ax2.scatter(t, r, color=color, s=30 * strength)
 
         plt.show()
     
