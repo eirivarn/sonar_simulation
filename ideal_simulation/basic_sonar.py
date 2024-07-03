@@ -29,6 +29,14 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
     rows, cols = binary_map.shape
     sonar_data = []
     theta = []
+    
+    plt.figure(figsize=(8, 8))
+    plt.imshow(binary_map, cmap='gray', origin='lower')
+    plt.colorbar(label='Obstacle Presence (1 = Obstacle, 0 = Free Space)')
+    plt.title('Binary Map Visualization')
+    plt.xlabel('X coordinate')
+    plt.ylabel('Y coordinate')
+    plt.show()
 
     for i in range(num_rays):
         ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
@@ -43,7 +51,6 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
                 break
             if binary_map[y, x] >= 0.5:
                 sonar_data.append((ray_distance, 1))  # Detection gives stronger signal
-                print('hit at distance:', ray_distance, 'angle:', ray_angle_rad, 'x:', x, 'y:', y)
                 break
         else:
             sonar_data.append((max_range, 0))  # Max range without hit

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
 def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     if axis not in ['x', 'y', 'z']:
@@ -24,39 +25,38 @@ def assign_mesh_id(df, mesh_id):
     return df
 
 def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices', resolution=1):
-    plt.figure(figsize=(12, 4))
-    unique_labels = np.unique(label_map)
-    num_colors = int(unique_labels.max() - unique_labels.min() + 1)
-    cmap = plt.get_cmap('viridis', num_colors)
-    
-    # Define the dimensions of the new rescaled map
+    # Determine the number of points in the rescaled map based on the resolution
     y_size = int((y_range[1] - y_range[0]) / resolution)
     z_size = int((z_range[1] - z_range[0]) / resolution)
-    rescaled_map = np.zeros((z_size, y_size))
+    rescaled_map = np.zeros((y_size, z_size))
     
-    # Create interpolation grid
+    # Generate original grid coordinates
     y_original = np.linspace(y_range[0], y_range[1], label_map.shape[1])
     z_original = np.linspace(z_range[0], z_range[1], label_map.shape[0])
-    y_new = np.linspace(y_range[0], y_range[1], y_size)
+    points = np.meshgrid(z_original, y_original)
+
+    # Generate new grid coordinates for interpolation
     z_new = np.linspace(z_range[0], z_range[1], z_size)
-    
-    # Interpolate using griddata
-    from scipy.interpolate import griddata
-    points = np.meshgrid(y_original, z_original)
-    values = label_map.flatten()
-    grid_z, grid_y = np.meshgrid(z_new, y_new)
-    rescaled_map = griddata((points[0].flatten(), points[1].flatten()), values, (grid_y, grid_z), method='nearest')
-    
-    # Plotting
-    plt.imshow(rescaled_map, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), origin='lower', cmap=cmap)
-    plt.colorbar(ticks=np.arange(unique_labels.min(), unique_labels.max() + 1))
-    plt.xlabel('Y')
-    plt.ylabel('Z')
+    y_new = np.linspace(y_range[0], y_range[1], y_size)
+    grid_y, grid_z = np.meshgrid(z_new, y_new)
+
+    # Flatten the points for griddata
+    points_flatten = (points[0].flatten(), points[1].flatten())
+    values_flatten = label_map.flatten()
+
+    # Interpolate to new grid
+    rescaled_map = griddata(points_flatten, values_flatten, (grid_y, grid_z), method='nearest')
+
+    # Plot the rescaled map
+    plt.figure(figsize=(12, 6))
+    plt.imshow(rescaled_map.T, cmap='viridis', origin='lower')
+    plt.colorbar()
     plt.title(title)
-    plt.gca().set_aspect('equal', adjustable='box')
+    plt.xlabel('Y Dimension')
+    plt.ylabel('Z Dimension')
     plt.show()
 
-    return rescaled_map
+    return rescaled_map.T
 
 def create_label_map(df, grid_size, x_range, y_range):
     if df is None:
@@ -80,6 +80,8 @@ def create_label_map(df, grid_size, x_range, y_range):
             label_map[x_bin, y_bin] = int(row['Mesh_ID'])  # Ensure Mesh_ID is cast to int if not already
 
     return label_map
+
+
 def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_positions, angles, max_range, angle_width, num_rays):
     if not all(isinstance(path, str) for path in mesh_paths):
         raise ValueError("All mesh paths must be strings.")
