@@ -24,16 +24,11 @@ def ground_wave_function(y, amplitude=2, frequency=0.05):
     """ Function to generate a wave-like ground using Perlin noise with higher resolution. """
     return int(45 + amplitude * pnoise1(y * frequency, repeat=1024))
 
-def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays, y_range, z_range):
+def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
     """Perform ray-casting to simulate sonar data."""
     rows, cols = binary_map.shape
     sonar_data = []
     theta = []
-
-    y_min, y_max = y_range
-    z_min, z_max = z_range
-    y_scale = (y_max - y_min) / rows
-    z_scale = (z_max - z_min) / cols
 
     for i in range(num_rays):
         ray_angle = angle - (angle_width / 2) + (angle_width * i / num_rays)
@@ -41,13 +36,14 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays, y_range, 
         theta.append(ray_angle_rad)
 
         for ray_distance in range(max_range):
-            x = int(pos[0] + ray_distance * np.cos(ray_angle_rad) / y_scale)
-            y = int(pos[1] + ray_distance * np.sin(ray_angle_rad) / z_scale)
-            if x < 0 or x >= rows or y < 0 or y >= cols:
+            y = int(pos[0] + ray_distance * np.cos(ray_angle_rad))
+            x = int(pos[1] + ray_distance * np.sin(ray_angle_rad))
+            if x < 0 or x >= cols or y < 0 or y >= rows:
                 sonar_data.append((ray_distance, 0))  # No detection gives weaker signal
                 break
-            if binary_map[x, y] >= 0.5:
+            if binary_map[y, x] >= 0.5:
                 sonar_data.append((ray_distance, 1))  # Detection gives stronger signal
+                print('hit at distance:', ray_distance, 'angle:', ray_angle_rad, 'x:', x, 'y:', y)
                 break
         else:
             sonar_data.append((max_range, 0))  # Max range without hit
@@ -94,7 +90,7 @@ def run_ideal_basic_sonar_simulation(dimensions, pipe_center, pipe_radius, pos, 
     y_range = (0, dimensions[0])
     z_range = (0, dimensions[1])
     # Perform ray-casting
-    sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays, y_range, z_range)
+    sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays, )
 
     # Visualize both views
     plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)

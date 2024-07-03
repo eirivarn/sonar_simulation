@@ -24,16 +24,6 @@ def assign_mesh_id(df, mesh_id):
     return df
 
 def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices', resolution=1):
-    """
-    Plots the label map and returns a rescaled version of the map based on the specified resolution.
-    
-    :param label_map: numpy.ndarray, the original label map to plot.
-    :param y_range: tuple, the physical y-range (min_y, max_y) to scale to.
-    :param z_range: tuple, the physical z-range (min_z, max_z) to scale to.
-    :param title: str, title of the plot.
-    :param resolution: float, resolution in units per pixel; determines the granularity of the returned map.
-    :return: numpy.ndarray, the rescaled label map.
-    """
     plt.figure(figsize=(12, 4))
     unique_labels = np.unique(label_map)
     num_colors = int(unique_labels.max() - unique_labels.min() + 1)
@@ -80,16 +70,16 @@ def create_label_map(df, grid_size, x_range, y_range):
     x_bins = np.linspace(x_range[0] - margin_x, x_range[1] + margin_x, grid_size[0] + 1)
     y_bins = np.linspace(y_range[0] - margin_y, y_range[1] + margin_y, grid_size[1] + 1)
 
-    label_map = np.zeros(grid_size)
+    label_map = np.zeros(grid_size, dtype=int)  # Ensure label_map is of integer type
 
     for _, row in df.iterrows():
         x_bin = np.digitize(row['Y'] - x_range[0], x_bins) - 1
         y_bin = np.digitize(row['Z'] - y_range[0], y_bins) - 1
         if 0 <= x_bin < grid_size[0] and 0 <= y_bin < grid_size[1]:
-            label_map[x_bin, y_bin] = row['Mesh_ID']
+            # Assigning integer Mesh_ID directly to the label_map
+            label_map[x_bin, y_bin] = int(row['Mesh_ID'])  # Ensure Mesh_ID is cast to int if not already
 
     return label_map
-
 def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_positions, angles, max_range, angle_width, num_rays):
     if not all(isinstance(path, str) for path in mesh_paths):
         raise ValueError("All mesh paths must be strings.")
@@ -141,14 +131,12 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
         if label_map is not None:
             combined_label_map = np.maximum(combined_label_map, label_map)
     
-
-
     label_map = plot_and_return_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
     print(f"Combined label map created with shape: {label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
 
     all_sonar_data, all_theta = [], []
     for pos, angle in zip(sonar_positions, angles):
-        sonar_data, theta = ray_cast(label_map, pos, angle, max_range, angle_width, num_rays, y_range, padded_z_range)
+        sonar_data, theta = ray_cast(label_map, pos, angle, max_range, angle_width, num_rays)
         all_sonar_data.append(sonar_data)
         all_theta.append(theta)
 
