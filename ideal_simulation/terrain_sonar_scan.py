@@ -53,25 +53,32 @@ def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2
 
     return rescaled_map.T
 
-def transform_and_plot_coordinates(transformed_coords):
+def transform_and_plot_coordinates(transformed_coords, y_range, z_range):
     cartesian_coords = []
     
     for (r, theta, strength) in transformed_coords:
-        x = r * np.cos(theta)
-        y = r * np.sin(theta)
+        y = r * np.cos(theta)*-1
+        x = r * np.sin(theta)
         cartesian_coords.append((x, y, strength))
     
     # Plotting the Cartesian coordinates
     x_coords = [coord[0] for coord in cartesian_coords]
     y_coords = [coord[1] for coord in cartesian_coords]
     strengths = [coord[2] for coord in cartesian_coords]
-    
+
     plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(x_coords, y_coords, c=strengths, cmap='viridis', s=100 * np.array(strengths), alpha=0.75)
+    scatter = plt.scatter(x_coords, y_coords, c=strengths, cmap='viridis', s=10 * np.array(strengths), alpha=0.75)
     plt.colorbar(scatter, label='Strength')
     plt.xlabel('X Coordinate')
     plt.ylabel('Y Coordinate')
     plt.title('Cartesian Coordinates with Strengths')
+
+    # Calculate the aspect ratio from the y and z ranges
+    y_range_span = y_range[1] - y_range[0]
+    z_range_span = z_range[1] - z_range[0]
+    aspect_ratio = y_range_span / z_range_span
+    
+    plt.gca().set_aspect(aspect_ratio, adjustable='box')
     plt.show()
     
     return cartesian_coords
@@ -155,6 +162,6 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
 
     transformed_coords = plot_both_views(label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
 
-    cartesian_coords = transform_and_plot_coordinates(transformed_coords)
+    cartesian_coords = transform_and_plot_coordinates(transformed_coords, y_range, padded_z_range)
 
     return cartesian_coords, label_map
