@@ -58,7 +58,7 @@ def transform_and_plot_coordinates(transformed_coords, y_range, z_range):
     
     for (r, theta, strength) in transformed_coords:
         y = r * np.cos(theta)*-1
-        x = r * np.sin(theta)
+        x = r * np.sin(theta)*-1
         cartesian_coords.append((x, y, strength))
     
     # Plotting the Cartesian coordinates

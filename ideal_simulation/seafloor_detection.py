@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
 
-def exclude_points_near_circle(x, y, xc, yc, radius, margin=25.0):
+def exclude_points_near_circle(x, y, xc, yc, radius, margin=10.0):
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
@@ -14,30 +14,30 @@ def exclude_outliers(x, y, spline, threshold=5.0):
     mask = np.abs(residuals) < threshold
     return x[mask], y[mask]
 
-"""
-Smoothing factor is a parameter that controls the trade-off between fitting the data and smoothing the curve
-    A smaller value of smoothing factor will result in a curve that passes through more points
-    A larger value of smoothing factor will result in a smoother curve that may not pass through all point
-
-Outlier threshold is a parameter that controls the maximum residual value allowed for a point to be considered an outlier
-    A smaller value of outlier threshold will result in more points being considered as outliers
-    A larger value of outlier threshold will result in fewer points being considered as outliers
-"""
-def interpolate_remaining_points(x, y, smoothing_factor=10.0, outlier_threshold=0.5):
-
+def interpolate_remaining_points(x, y, smoothing_factor=5.0, outlier_threshold=0.5):
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
 
-    spline = UnivariateSpline(x_sorted, y_sorted, s=smoothing_factor)
-    x_filtered, y_filtered = exclude_outliers(x_sorted, y_sorted, spline, outlier_threshold)
-    
-    # Re-fit the spline without outliers
-    spline = UnivariateSpline(x_filtered, y_filtered, s=smoothing_factor)
-    x_new = np.linspace(x_filtered.min(), x_filtered.max(), 500)
-    y_new = spline(x_new)
-    
-    return x_new, y_new
+    try:
+        spline = UnivariateSpline(x_sorted, y_sorted, s=smoothing_factor)
+        x_filtered, y_filtered = exclude_outliers(x_sorted, y_sorted, spline, outlier_threshold)
+    except Exception as e:
+        print(f"Initial spline fitting failed: {e}")
+        return x_sorted, y_sorted  # Return the sorted original points if spline fitting fails
+
+    if len(x_filtered) < 2 or len(y_filtered) < 2:
+        print("Not enough points after filtering outliers")
+        return x_sorted, y_sorted  # Return the sorted original points if too many points are filtered
+
+    try:
+        spline = UnivariateSpline(x_filtered, y_filtered, s=smoothing_factor)
+        x_new = np.linspace(x_filtered.min(), x_filtered.max(), 500)
+        y_new = spline(x_new)
+        return x_new, y_new
+    except Exception as e:
+        print(f"Re-fitting spline failed: {e}")
+        return x_filtered, y_filtered 
 
 def plot_and_save_points(x, y, mask, title, folder):
     plt.figure()
@@ -76,7 +76,7 @@ def plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, fold
     plt.savefig(file_path)
     plt.close()
 
-def plot_curve_and_circle(x, y, common_mask, xc, yc, radius, folder):
+def plot_curve_and_circle(x, y, xc, yc, radius, folder):
     x_remaining, y_remaining = exclude_points_near_circle(x, y, xc, yc, radius)
     x_new, y_new = interpolate_remaining_points(x_remaining, y_remaining)
 
