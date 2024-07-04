@@ -33,6 +33,20 @@ def transform_to_reference_sonar(ref_pos, ref_angle, global_coords):
 
     return transformed_coords
 
+def find_farthest_points(sonar_positions):
+    max_distance = 0
+    point1 = point2 = None
+
+    for i in range(len(sonar_positions)):
+        for j in range(i + 1, len(sonar_positions)):
+            distance = np.linalg.norm(np.array(sonar_positions[i]) - np.array(sonar_positions[j]))
+            if distance > max_distance:
+                max_distance = distance
+                point1 = sonar_positions[i]
+                point2 = sonar_positions[j]
+
+    return point1, point2
+
 def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, plot=True):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 
@@ -54,8 +68,14 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
     for pos, sonar_data, theta in zip(sonar_positions, all_sonar_data, all_theta):
         global_coords.extend(transform_to_global(pos, sonar_data, theta))
 
-    ref_pos = sonar_positions[0]
-    ref_angle = angles[0]
+    # Find the two sonar positions that are farthest from each other
+    point1, point2 = find_farthest_points(sonar_positions)
+    ref_pos = [(point1[0] + point2[0]) / 2, (point1[1] + point2[1]) / 2]
+
+    # Calculate the reference angle and the angle width
+    min_angle = np.min([np.min(t) for t in all_theta])
+    max_angle = np.max([np.max(t) for t in all_theta])
+    ref_angle = 0  # Set the reference angle to 0 since it will be calculated dynamically
 
     transformed_coords = transform_to_reference_sonar(ref_pos, ref_angle, global_coords)
     
@@ -64,7 +84,7 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
         ax2.set_theta_zero_location('S')
         ax2.set_theta_direction(-1)
         ax2.set_ylim(0, max_range)
-        ax2.set_xlim(-np.radians(angle_width / 2), np.radians(angle_width / 2))
+        ax2.set_xlim(min_angle, max_angle)
         ax2.set_title('Sonar Image')
         ax2.set_facecolor('white')
 
@@ -72,8 +92,7 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
         colors = viridis((strengths - np.min(strengths)) / (np.max(strengths) - np.min(strengths) + 1))
 
         for (r, t, strength), color in zip(transformed_coords, colors):
-            if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
-                ax2.scatter(t, r, color=color, s=50 * strength)
+            ax2.scatter(t, r, color=color, s=50 * strength)
 
         plt.show()
 
