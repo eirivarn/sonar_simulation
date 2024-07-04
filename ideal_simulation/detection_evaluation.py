@@ -3,7 +3,7 @@ import pyvista as pv
 import numpy as np
 import matplotlib.pyplot as plt
 
-def extract_2d_slice_from_mesh(mesh, position, axis='x'):
+def extract_2d_slice_from_mesh(mesh, position, axis='y'):
     # Define axis normals and adjust origin dynamically
     axes = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
     origins = {'x': (position, 0, 0), 'y': (0, position, 0), 'z': (0, 0, position)}
@@ -29,7 +29,7 @@ def create_binary_map(df, grid_size, x_range, y_range):
     x_bins = np.linspace(x_range[0], x_range[1], grid_size[0])
     y_bins = np.linspace(y_range[0], y_range[1], grid_size[1])
 
-    binary_map, _, _ = np.histogram2d(df['Y'], df['Z'], bins=[x_bins, y_bins])
+    binary_map, _, _ = np.histogram2d(df['Z'], df['X'], bins=[x_bins, y_bins])
 
     # Convert the histogram to binary map (0 or 1)
     binary_map[binary_map > 0] = 1
@@ -46,7 +46,7 @@ pipeline_mesh.points = pipeline_mesh.points.dot(rotation_matrix)
 seafloor_mesh.points = seafloor_mesh.points.dot(rotation_matrix)
 
 # Define the position and axis for slicing
-slice_position = 0.0  # Adjust as needed
+slice_position = 3.0  # Adjust as needed
 slice_axis = 'x'  # Adjust as needed
 
 # Extract slices

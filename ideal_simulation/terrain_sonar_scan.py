@@ -111,7 +111,7 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
     z_range = (0, max_z - min_z)
     padded_z_range = (0, z_range[1] + padding)
 
-    grid_size = (400, 400)
+    grid_size = (250, 250)
     combined_label_map = np.zeros(grid_size)
 
     for df in slice_dfs:
