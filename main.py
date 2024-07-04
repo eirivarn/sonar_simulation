@@ -40,14 +40,11 @@ def main():
     # ************ Run Mesh Sonar Simulation ************
     run_ideal_mesh_sonar_scan_simulation(seperate_mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
     
-    # ************ Run Mesh Sonar Mapping Simulation ************
-    # run_ideal_mesh_sonar_mapping_simulation(mesh_path, simulation_dimensions, 'x', slice_positions, sonar_positions, angles, max_range, angle_width, num_rays)
-    
-    # ************ Create Sonar Image from Ray Cast ************
-    # save_sonar_image(mesh_path, slice_position, simulation_dimensions, sonar_positions, angles, max_range, angle_width, num_rays)
-    
     # ************ Run Sonar Simulation with Clustering ************
-    # run_pipeline_seafloor_detection(mesh_path, slice_position, simulation_dimensions, sonar_positions, angles, max_range, angle_width, num_rays, clustering_params)
+    # run_pipeline_seafloor_detection(combined_mesh_path, slice_position, sonar_positions, angles, max_range, angle_width, num_rays, clustering_params)
+    
+    # ************ Run Mesh Sonar Mapping Simulation ************
+    # run_ideal_mesh_sonar_mapping_simulation(seperate_mesh_paths, simulation_dimensions, 'x', slice_positions, sonar_positions, angles, max_range, angle_width, num_rays)
 
     
 if __name__ == "__main__":

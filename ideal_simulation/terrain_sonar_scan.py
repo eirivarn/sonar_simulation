@@ -53,6 +53,29 @@ def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2
 
     return rescaled_map.T
 
+def transform_and_plot_coordinates(transformed_coords):
+    cartesian_coords = []
+    
+    for (r, theta, strength) in transformed_coords:
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+        cartesian_coords.append((x, y, strength))
+    
+    # Plotting the Cartesian coordinates
+    x_coords = [coord[0] for coord in cartesian_coords]
+    y_coords = [coord[1] for coord in cartesian_coords]
+    strengths = [coord[2] for coord in cartesian_coords]
+    
+    plt.figure(figsize=(10, 8))
+    scatter = plt.scatter(x_coords, y_coords, c=strengths, cmap='viridis', s=100 * np.array(strengths), alpha=0.75)
+    plt.colorbar(scatter, label='Strength')
+    plt.xlabel('X Coordinate')
+    plt.ylabel('Y Coordinate')
+    plt.title('Cartesian Coordinates with Strengths')
+    plt.show()
+    
+    return cartesian_coords
+
 def create_label_map(df, grid_size, x_range, y_range):
     if df is None:
         return None
@@ -131,4 +154,7 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
         all_theta.append(theta)
 
     transformed_coords = plot_both_views(label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
-    return transformed_coords
+
+    cartesian_coords = transform_and_plot_coordinates(transformed_coords)
+
+    return cartesian_coords, label_map

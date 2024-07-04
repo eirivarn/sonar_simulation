@@ -4,15 +4,6 @@ import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
 
-#TODO interpolate seafloor
-
-def remove_most_common_y_value_with_margin(x, y, margin=3.0):
-    hist, bin_edges = np.histogram(y, bins=np.arange(min(y), max(y) + margin, margin))
-    most_common_bin_index = np.argmax(hist)
-    most_common_y = bin_edges[most_common_bin_index]
-    mask = (y < (most_common_y - margin / 2)) | (y > (most_common_y + margin / 2))
-    return x[mask], y[mask]
-
 def exclude_points_near_circle(x, y, xc, yc, radius, margin=25.0):
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))

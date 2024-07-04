@@ -69,7 +69,7 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
         ax2.set_facecolor('white')
 
         strengths = np.array([coord[2] for coord in transformed_coords])
-        colors = viridis((strengths - np.min(strengths)) / (np.max(strengths) - np.min(strengths)+1))
+        colors = viridis((strengths - np.min(strengths)) / (np.max(strengths) - np.min(strengths) + 1))
 
         for (r, t, strength), color in zip(transformed_coords, colors):
             if -np.radians(angle_width / 2) <= t <= np.radians(angle_width / 2):
@@ -77,7 +77,8 @@ def plot_both_views(world, y_range, z_range, sonar_positions, all_sonar_data, an
 
         plt.show()
 
-    return transformed_coords
+    # Return the transformed coordinates along with their strengths
+    return [(r, t, strength) for r, t, strength in transformed_coords]
 
 def run_ideal_multiple_sonar_simulation(dimensions, pipe_center, pipe_radius, sonar_positions, angles, max_range, angle_width, num_rays):
     room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
