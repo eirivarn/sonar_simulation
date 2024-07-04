@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
 
-def exclude_points_near_circle(x, y, xc, yc, radius, margin=10.0):
+def exclude_points_near_circle(x, y, xc, yc, radius, margin=20.0):
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]

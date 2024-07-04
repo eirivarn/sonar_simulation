@@ -51,7 +51,7 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
     elif algorithm == 'Agglomerative':
         clustering = AgglomerativeClustering(**kwargs).fit(points)
     elif algorithm == 'RANSAC':
-        model, inliers = ransac(points, CircleModel, min_samples=3, residual_threshold=50, max_trials=1000)
+        model, inliers = ransac(points, CircleModel, min_samples=10, residual_threshold=9, max_trials=1000)
         return points[inliers], inliers
 
     labels = clustering.labels_
@@ -65,7 +65,7 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
 
 # Define a function to detect circles and save plots
 def detect_circle(x, y, clustering_params, plot_dir='images/clustering_algorithms'):
-    titles = ['KMeans', 'Agglomerative']
+    titles = ['DBSCAN', 'RANSAC']
     circle_points_dict = {}
 
     for alg in titles:
@@ -74,20 +74,6 @@ def detect_circle(x, y, clustering_params, plot_dir='images/clustering_algorithm
 
         plt.figure(figsize=(10, 8))
         plt.scatter(x, y, c='lightgray', label='All Points')
-
-        if points.size > 0:
-            plt.scatter(points[:, 0], points[:, 1], label=f'{alg} Clustered Points')
-            xc, yc, radius = fit_circle_to_points(points[:, 0], points[:, 1])
-            circle = plt.Circle((xc, yc), radius, color='r', fill=False, label='Fitted Circle')
-            plt.gca().add_patch(circle)
-
-        plt.xlabel('X Coordinate')
-        plt.ylabel('Y Coordinate')
-        plt.title(f'{alg} Clustering and Circle Detection')
-        plt.legend()
-        os.makedirs(plot_dir, exist_ok=True)
-        plt.savefig(f'{plot_dir}/{alg}_clustering_plot.png')
-        plt.close()
 
     # Combine results for common points
     all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in titles])
