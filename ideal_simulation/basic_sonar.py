@@ -43,6 +43,7 @@ def ray_cast(binary_map, pos, angle, max_range, angle_width, num_rays):
                 break
             if binary_map[y, x] >= 1.5:
                 sonar_data.append((ray_distance, 2))
+                break
             if binary_map[y, x] >= 0.5:
                 sonar_data.append((ray_distance, 1))  
                 break 

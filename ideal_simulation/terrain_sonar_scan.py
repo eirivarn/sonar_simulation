@@ -4,6 +4,7 @@ import pandas as pd
 from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
+from concurrent.futures import ThreadPoolExecutor
 
 def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     if axis not in ['x', 'y', 'z']:
@@ -16,38 +17,32 @@ def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     if slice.n_points == 0:
         print(f"No points found in the slice at {axis}={position}")
         return None
-    points = slice.points*100
+    points = slice.points * 100
     df = pd.DataFrame(points, columns=['X', 'Y', 'Z'])
     return df
 
 def assign_mesh_id(df, mesh_id):
-    df['Mesh_ID'] = mesh_id  # Assign a unique identifier to each mesh's points
+    df['Mesh_ID'] = mesh_id
     return df
 
 def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices', resolution=1):
-    # Determine the number of points in the rescaled map based on the resolution
     y_size = int((y_range[1] - y_range[0]) / resolution)
     z_size = int((z_range[1] - z_range[0]) / resolution)
     rescaled_map = np.zeros((y_size, z_size))
-    
-    # Generate original grid coordinates
+
     y_original = np.linspace(y_range[0], y_range[1], label_map.shape[1])
     z_original = np.linspace(z_range[0], z_range[1], label_map.shape[0])
     points = np.meshgrid(z_original, y_original)
 
-    # Generate new grid coordinates for interpolation
     z_new = np.linspace(z_range[0], z_range[1], z_size)
     y_new = np.linspace(y_range[0], y_range[1], y_size)
     grid_y, grid_z = np.meshgrid(z_new, y_new)
 
-    # Flatten the points for griddata
     points_flatten = (points[0].flatten(), points[1].flatten())
     values_flatten = label_map.flatten()
 
-    # Interpolate to new grid
     rescaled_map = griddata(points_flatten, values_flatten, (grid_y, grid_z), method='nearest')
 
-    # Plot the rescaled map
     plt.figure(figsize=(12, 6))
     plt.imshow(rescaled_map.T, cmap='viridis', origin='lower')
     plt.colorbar()
@@ -62,25 +57,34 @@ def create_label_map(df, grid_size, x_range, y_range):
     if df is None:
         return None
 
-    # Compute margins for binning
     margin_x = (x_range[1] - x_range[0]) * 0.01
     margin_y = (y_range[1] - y_range[0]) * 0.01
 
-    # Define bin edges with margins
     x_bins = np.linspace(x_range[0] - margin_x, x_range[1] + margin_x, grid_size[0] + 1)
     y_bins = np.linspace(y_range[0] - margin_y, y_range[1] + margin_y, grid_size[1] + 1)
 
-    label_map = np.zeros(grid_size, dtype=int)  # Ensure label_map is of integer type
+    label_map = np.zeros(grid_size, dtype=int)
 
-    for _, row in df.iterrows():
-        x_bin = np.digitize(row['Y'] - x_range[0], x_bins) - 1
-        y_bin = np.digitize(row['Z'] - y_range[0], y_bins) - 1
-        if 0 <= x_bin < grid_size[0] and 0 <= y_bin < grid_size[1]:
-            # Assigning integer Mesh_ID directly to the label_map
-            label_map[x_bin, y_bin] = int(row['Mesh_ID'])  # Ensure Mesh_ID is cast to int if not already
+    # Use vectorized operations for binning
+    x_bin_indices = np.digitize(df['Y'] - x_range[0], x_bins) - 1
+    y_bin_indices = np.digitize(df['Z'] - y_range[0], y_bins) - 1
+
+    valid_indices = (0 <= x_bin_indices) & (x_bin_indices < grid_size[0]) & (0 <= y_bin_indices) & (y_bin_indices < grid_size[1])
+    label_map[x_bin_indices[valid_indices], y_bin_indices[valid_indices]] = df['Mesh_ID'][valid_indices].astype(int)
 
     return label_map
 
+def process_mesh(path, position, axis, mesh_index, rotation_matrix, min_y, min_z):
+    try:
+        mesh = pv.read(path)
+        mesh.points = mesh.points.dot(rotation_matrix)
+        slice_df = extract_2d_slice_from_mesh(mesh, position, axis)
+        if slice_df is not None:
+            slice_df = assign_mesh_id(slice_df, mesh_index + 1)
+            return slice_df, slice_df['Y'].min(), slice_df['Y'].max(), slice_df['Z'].min(), slice_df['Z'].max()
+    except Exception as e:
+        print(f"Error reading mesh from {path}: {e}")
+    return None, min_y, min_y, min_z, min_z
 
 def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_positions, angles, max_range, angle_width, num_rays):
     if not all(isinstance(path, str) for path in mesh_paths):
@@ -88,51 +92,35 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
     if axis not in ['x', 'y', 'z']:
         raise ValueError(f"Invalid axis '{axis}', must be 'x', 'y', or 'z'")
 
-    meshes = []
-    for path in mesh_paths:
-        try:
-            mesh = pv.read(path)
-            meshes.append(mesh)
-        except Exception as e:
-            print(f"Error reading mesh from {path}: {e}")
-            continue
+    rotation_matrix = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
 
+    min_y, max_y, min_z, max_z = np.inf, -np.inf, np.inf, -np.inf
     slice_dfs = []
-    min_y, max_y, min_z, max_z = np.inf, -np.inf, np.inf, -np.inf  # Initialize to find global extents
 
-    # Process each mesh to calculate global extents
-    for mesh_index, mesh in enumerate(meshes):
-        rotation_matrix = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
-        mesh.points = mesh.points.dot(rotation_matrix)
-        slice_df = extract_2d_slice_from_mesh(mesh, position, axis)
-        if slice_df is not None:
-            slice_df = assign_mesh_id(slice_df, mesh_index + 1)
-            min_y, max_y = min(min_y, slice_df['Y'].min()), max(max_y, slice_df['Y'].max())
-            min_z, max_z = min(min_z, slice_df['Z'].min()), max(max_z, slice_df['Z'].max())
-            slice_dfs.append(slice_df)
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(process_mesh, path, position, axis, idx, rotation_matrix, min_y, min_z) for idx, path in enumerate(mesh_paths)]
+        for future in futures:
+            slice_df, mesh_min_y, mesh_max_y, mesh_min_z, mesh_max_z = future.result()
+            if slice_df is not None:
+                slice_dfs.append(slice_df)
+                min_y, max_y = min(min_y, mesh_min_y), max(max_y, mesh_max_y)
+                min_z, max_z = min(min_z, mesh_min_z), max(max_z, mesh_max_z)
 
-    # Normalize the Y coordinates to start from zero
     y_range = (0, max_y - min_y)
-    
-    # Calculate padding for Z range and normalize
     padding = (max_z - min_z) * 3
-    z_range = (0, max_z - min_z)  # Normalized Z range without padding
-    padded_z_range = (0, z_range[1] + padding)  # Z range with padding
+    z_range = (0, max_z - min_z)
+    padded_z_range = (0, z_range[1] + padding)
 
-    grid_size = (400, 400)  
-
+    grid_size = (400, 400)
     combined_label_map = np.zeros(grid_size)
 
-    # Normalized slice placement and combined label map creation code...
     for df in slice_dfs:
-        # Normalize coordinates in the DataFrame
         df['Y'] -= min_y
         df['Z'] -= min_z
-
         label_map = create_label_map(df, grid_size, y_range, padded_z_range)
         if label_map is not None:
             combined_label_map = np.maximum(combined_label_map, label_map)
-    
+
     label_map = plot_and_return_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
     print(f"Combined label map created with shape: {label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
 
