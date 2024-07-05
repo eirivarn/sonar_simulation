@@ -64,11 +64,10 @@ def cluster_circle_points(x, y, algorithm='DBSCAN', **kwargs):
     return np.array([]), np.zeros_like(labels, dtype=bool)
 
 # Define a function to detect circles and save plots
-def detect_circle(x, y, clustering_params, plot_dir='images/clustering_algorithms'):
-    titles = ['DBSCAN', 'RANSAC']
+def detect_circle(x, y, clustering_params, algorithms = ['KMeans', 'Agglomerative']):
     circle_points_dict = {}
 
-    for alg in titles:
+    for alg in algorithms:
         points, mask = cluster_circle_points(x, y, algorithm=alg, **clustering_params.get(alg, {}))
         circle_points_dict[alg] = points
 
@@ -76,7 +75,7 @@ def detect_circle(x, y, clustering_params, plot_dir='images/clustering_algorithm
         plt.scatter(x, y, c='lightgray', label='All Points')
 
     # Combine results for common points
-    all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in titles])
+    all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in algorithms])
     common_mask = all_masks.all(axis=1)
     common_points = np.column_stack((x, y))[common_mask]
 

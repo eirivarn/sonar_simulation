@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
 
-def exclude_points_near_circle(x, y, xc, yc, radius, margin=20.0):
+def exclude_points_near_circle(x, y, xc, yc, radius, margin=10.0):
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def exclude_outliers(x, y, spline, threshold=5.0):
+def exclude_outliers(x, y, spline, threshold=10.0):
     residuals = y - spline(x)
     mask = np.abs(residuals) < threshold
     return x[mask], y[mask]
 
-def interpolate_remaining_points(x, y, smoothing_factor=5.0, outlier_threshold=0.5):
+def interpolate_remaining_points(x, y, smoothing_factor=5.0, outlier_threshold=10.0):
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
@@ -130,10 +130,11 @@ def calculate_enclosed_area_and_percentage(curve_x, curve_y, xc, yc, radius):
 
     return enclosed_area, enclosed_percentage, enclosed_polygon
 
-def plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, xc, yc, radius, enclosed_polygon, folder):
+def plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, xc, yc, radius, enclosed_polygon, folder, map_type = 'signal'):
     plt.figure(figsize=(15,15))
-    plt.scatter(x, y, color='gray', label='All points')
-    plt.scatter(x[common_mask], y[common_mask], color='red', label='Filtered points')
+    if map_type == 'signal':
+        plt.scatter(x[common_mask], y[common_mask], color='red', label='Filtered points')
+        plt.scatter(x, y, color='gray', label='All points')
     plt.plot(curve_x, curve_y, color='green', label='Interpolated curve')
     theta = np.linspace(0, 2 * np.pi, 100)
     x_circle = xc + radius * np.cos(theta)
