@@ -5,10 +5,12 @@ from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor
+from typing import List, Tuple, Union
+from config import config
 
-def extract_2d_slice_from_mesh(mesh, position, axis='x'):
-    if axis not in ['x', 'y', 'z']:
-        raise ValueError(f"Invalid axis '{axis}', must be 'x', 'y', or 'z'")
+def extract_2d_slice_from_mesh(mesh, position: float, axis: str = 'x') -> pd.DataFrame:
+    if axis not in config.get('mesh_processing', 'slice_axes'):
+        raise ValueError(f"Invalid axis '{axis}', must be one of {config.get('mesh_processing', 'slice_axes')}")
     axes = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
     origins = {'x': (position, 0, 0), 'y': (0, position, 0), 'z': (0, 0, position)}
     normal = axes[axis]
@@ -25,7 +27,8 @@ def assign_mesh_id(df, mesh_id):
     df['Mesh_ID'] = mesh_id
     return df
 
-def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices', resolution=1):
+def plot_and_return_label_map(label_map, y_range, z_range, title='Label Map of 2D Slices'):
+    resolution = config.get('mesh_processing', 'label_map_resolution')
     y_size = int((y_range[1] - y_range[0]) / resolution)
     z_size = int((z_range[1] - z_range[0]) / resolution)
     rescaled_map = np.zeros((y_size, z_size))
@@ -106,7 +109,7 @@ def create_label_map(df, grid_size, x_range, y_range):
 
     return label_map
 
-def process_mesh(path, position, axis, mesh_index, rotation_matrix, min_y, min_z):
+def process_mesh(path: str, position: float, axis: str, mesh_index: int, rotation_matrix: np.ndarray, min_y: float, min_z: float) -> Tuple[Union[pd.DataFrame, None], float, float, float, float]:
     try:
         mesh = pv.read(path)
         mesh.points = mesh.points.dot(rotation_matrix)
@@ -118,11 +121,18 @@ def process_mesh(path, position, axis, mesh_index, rotation_matrix, min_y, min_z
         print(f"Error reading mesh from {path}: {e}")
     return None, min_y, min_y, min_z, min_z
 
-def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_positions, angles, max_range, angle_width, num_rays):
+def run_ideal_mesh_sonar_scan_simulation(sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
+    mesh_paths = config.seperate_mesh_paths
+    axis = 'x'
+    position = 0.5
+    max_range = config.get('sonar', 'max_range')
+    angle_width = config.get('sonar', 'angle_width')
+    num_rays = config.get('sonar', 'num_rays')
+
     if not all(isinstance(path, str) for path in mesh_paths):
         raise ValueError("All mesh paths must be strings.")
-    if axis not in ['x', 'y', 'z']:
-        raise ValueError(f"Invalid axis '{axis}', must be 'x', 'y', or 'z'")
+    if axis not in config.get('mesh_processing', 'slice_axes'):
+        raise ValueError(f"Invalid axis '{axis}', must be one of {config.get('mesh_processing', 'slice_axes')}")
 
     rotation_matrix = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
 
@@ -139,11 +149,12 @@ def run_ideal_mesh_sonar_scan_simulation(mesh_paths, axis, position, sonar_posit
                 min_z, max_z = min(min_z, mesh_min_z), max(max_z, mesh_max_z)
 
     y_range = (0, max_y - min_y)
-    padding = (max_z - min_z) * 3
+    padding_factor = config.get('mesh_processing', 'padding_factor')
+    padding = (max_z - min_z) * padding_factor
     z_range = (0, max_z - min_z)
     padded_z_range = (0, z_range[1] + padding)
 
-    grid_size = (300, 300)
+    grid_size = config.get('mesh_processing', 'grid_size')
     combined_label_map = np.zeros(grid_size)
 
     for df in slice_dfs:

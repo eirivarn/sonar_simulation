@@ -20,13 +20,13 @@ def main():
     slice_positions = list(range(-25, 25, 5))
 
     # ************ Run Basic Simulation ************
-    run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
+    # run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
     
     # ************ Run Multiple Sonar Simulation ************
-    run_ideal_multiple_sonar_simulation(sonar_positions_2, angles)
+    # run_ideal_multiple_sonar_simulation(sonar_positions_2, angles)
     
     # ************ Run Mesh Sonar Simulation ************
-    # run_ideal_mesh_sonar_scan_simulation(seperate_mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
+    run_ideal_mesh_sonar_scan_simulation(sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation with Clustering ************
     # run_pipeline_seafloor_detection(seperate_mesh_paths, slice_position, sonar_positions_1, angles, max_range, angle_width, num_rays, clustering_params_signal, get_ground_truth=True, clustering_params_real=clustering_params_real)

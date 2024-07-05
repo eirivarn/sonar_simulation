@@ -9,7 +9,7 @@ class Config:
         self.seperate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
         
         self.sonar: Dict[str, Any] = {
-            "max_range": 500,
+            "max_range": 1000,
             "angle_width": 60,
             "num_rays": 120
         }
@@ -45,6 +45,12 @@ class Config:
         self.ray_cast: Dict[str, float] = {
             "strong_signal": 1.5,
             "medium_signal": 0.5
+        }
+        self.mesh_processing: Dict[str, Any] = {
+            "grid_size": (300, 300),
+            "padding_factor": 3,
+            "label_map_resolution": 1,
+            "slice_axes": ['x', 'y', 'z']
         }
 
     def get(self, section: str, key: str) -> Any:
