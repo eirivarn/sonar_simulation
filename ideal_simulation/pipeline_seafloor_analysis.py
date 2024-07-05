@@ -146,8 +146,8 @@ def extract_ground_truth(label_map, clustering_params):
         print(f"GROUND TRUTH: Free-span Status: {free_span_status}")
         print(f"GROUND TRUTH: Stability Percentage: {stability_percentage}%")
 
-        if enclosed_polygon:
-            plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type = 'real')
+        
+        plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type = 'real')
 
         return stability_percentage
         
@@ -183,8 +183,7 @@ def run_pipeline_seafloor_detection(mesh_paths, slice_position, sonar_positions,
         print(f"SIGNAL: Free-span Status: {free_span_status}")
         print(f"SIGNAL: Stability Percentage: {stability_percentage}%")
 
-        if enclosed_polygon:
-            plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
+        plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
         
         if get_ground_truth:
             ground_truth_stability_percentage = extract_ground_truth(label_map, clustering_params_real)

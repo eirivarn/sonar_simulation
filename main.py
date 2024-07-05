@@ -10,18 +10,18 @@ def main():
     pipe_center = (100, 500)  # center of the pipe (y, x)
     pipe_radius = 50  
     simulation_dimensions = (500, 1000)   # (y, x)  
-    sonar_positions_1 =  [(1000, 600), (1000, 1200)] # (y, x)
+    sonar_positions_1 =  [(1000, 1200)] # (y, x)
     sonar_positions_2 =  [(300, 400), (300, 600)] # (y, x)
     
 
-    angles = [160, 200]  # direction in degrees (mid-point direction pointing down)
+    angles = [200]  # direction in degrees (mid-point direction pointing down)
     max_range = 1000
     angle_width = 90
     num_rays = 100  
 
     combined_mesh_path = ['/Users/eirikvarnes/code/blender/combined.obj']
     seperate_mesh_paths = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
-    slice_position = -20
+    slice_position = -30
     slice_positions = list(range(-25, 25, 5))
     
     # Clustering parameters
