@@ -8,10 +8,10 @@ from ideal_simulation.pipeline_seafloor_analysis import run_pipeline_seafloor_de
 def main():
     # ************ Simulation Parameters ************ 
     sonar_positions_1 =  [(1000, 1200)] # (y, x)
-    sonar_positions_2 =  [(300, 500), (300, 600)] # (y, x)
+    sonar_positions_2 =  [(300, 400), (300, 700)] # (y, x)
     
 
-    angles = [180]  # direction in degrees (mid-point direction pointing down)
+    angles = [180, 190]  # direction in degrees (mid-point direction pointing down)
 
 
     combined_mesh_path = ['/Users/eirikvarnes/code/blender/combined.obj']
@@ -23,7 +23,7 @@ def main():
     run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
     
     # ************ Run Multiple Sonar Simulation ************
-    # run_ideal_multiple_sonar_simulation(simulation_dimensions, pipe_center, pipe_radius, sonar_positions_2, angles, max_range, angle_width, num_rays)
+    run_ideal_multiple_sonar_simulation(sonar_positions_2, angles)
     
     # ************ Run Mesh Sonar Simulation ************
     # run_ideal_mesh_sonar_scan_simulation(seperate_mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)

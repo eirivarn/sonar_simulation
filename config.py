@@ -1,17 +1,19 @@
+from typing import Tuple, Dict, Any, List
+
 class Config:
     def __init__(self):
-        self.dimensions = (500, 1000) #(y, x)
-        self.pipe_center = (90, 500)   #(y, x)
-        self.pipe_radius = 30   
-        self.combined_mesh_path = ['/Users/eirikvarnes/code/blender/combined.obj']
-        self.seperate_mesh_paths = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
+        self.dimensions: Tuple[int, int] = (500, 1000)  # (y, x)
+        self.pipe_center: Tuple[int, int] = (90, 500)   # (y, x)
+        self.pipe_radius: int = 30
+        self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
+        self.seperate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
         
-        self.sonar = {
+        self.sonar: Dict[str, Any] = {
             "max_range": 500,
             "angle_width": 60,
             "num_rays": 120
         }
-        self.clustering = {
+        self.clustering: Dict[str, Dict[str, Any]] = {
             "dbscan": {
                 "eps": 0.5,
                 "min_samples": 10
@@ -28,14 +30,14 @@ class Config:
                 "max_trials": 1000
             }
         }
-        self.plotting = {
+        self.plotting: Dict[str, Any] = {
             "room_color": 'gray',
             "sonar_position_color": 'red',
             "sonar_ray_color": 'yellow',
             "plot_size": [14, 6]
         }
 
-    def get(self, section: str, key: str):
+    def get(self, section: str, key: str) -> Any:
         return getattr(self, section).get(key)
 
 # Initialize the config object
