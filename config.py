@@ -36,6 +36,16 @@ class Config:
             "sonar_ray_color": 'yellow',
             "plot_size": [14, 6]
         }
+        self.ground_wave: Dict[str, Any] = {
+            "amplitude": 2,
+            "frequency": 0.05,
+            "base_level": 45,
+            "repeat": 1024
+        }
+        self.ray_cast: Dict[str, float] = {
+            "strong_signal": 1.5,
+            "medium_signal": 0.5
+        }
 
     def get(self, section: str, key: str) -> Any:
         return getattr(self, section).get(key)

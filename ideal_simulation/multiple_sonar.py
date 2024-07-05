@@ -52,8 +52,12 @@ def find_farthest_points(sonar_positions: List[Tuple[int, int]]) -> Tuple[Union[
 
 def plot_both_views(world: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[int, int], sonar_positions: List[Tuple[int, int]], all_sonar_data: List[List[Tuple[int, int]]], angles: List[float], angle_width: float, max_range: int, all_theta: List[List[float]], plot: bool = True) -> List[Tuple[float, float, int]]:
     plot_size: List[int] = config.get('plotting', 'plot_size')
+    room_color: str = config.get('plotting', 'room_color')
+    sonar_position_color: str = config.get('plotting', 'sonar_position_color')
+    sonar_ray_color: str = config.get('plotting', 'sonar_ray_color')
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=plot_size)
-    ax1.imshow(world, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), cmap='gray', origin='lower', interpolation='bilinear')
+    ax1.imshow(world, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), cmap=room_color, origin='lower', interpolation='bilinear')
     colors: List[str] = ['red', 'blue', 'green', 'yellow']
 
     for idx, (pos, sonar_data, theta) in enumerate(zip(sonar_positions, all_sonar_data, all_theta)):
