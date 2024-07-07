@@ -1,14 +1,13 @@
-import numpy as np
-import pyvista as pv
+from typing import Tuple, List, Dict, Any, Union
 import os
+import numpy as np
 from shapely.geometry import LineString, Point, Polygon
-from ideal_simulation.terrain_sonar_scan import *
-from ideal_simulation.circle_detection import *
-from ideal_simulation.seafloor_detection import *
+from config import config
 from ideal_simulation.terrain_sonar_scan import run_ideal_mesh_sonar_scan_simulation
+from ideal_simulation.circle_detection import detect_circle
+from ideal_simulation.seafloor_detection import plot_and_save_all_points_with_circle, plot_curve_and_circle, plot_and_save_points, plot_and_save_intersections
 
-
-def calculate_enclosed_area(curve_x, curve_y, xc, yc, radius):
+def calculate_enclosed_area(curve_x: np.ndarray, curve_y: np.ndarray, xc: float, yc: float, radius: float) -> Tuple[float, float, Union[Polygon, None], float, Union[float, None]]:
     if len(curve_x) == 0 or len(curve_y) == 0:
         raise ValueError("Curve data is empty.")
 
@@ -63,7 +62,12 @@ def calculate_enclosed_area(curve_x, curve_y, xc, yc, radius):
     
     return 0, 0, None, relative_distance_to_ocean_floor, average_slope
 
-def assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius, angle_weight=0.3, area_weight=0.3, distance_weight=0.4, free_span_threshold=0.1):
+def assess_pipe_condition(angle_degrees: Union[float, None], enclosed_area: Union[float, None], relative_distance_to_ocean_floor: Union[float, None], radius: float) -> Tuple[str, float]:
+    angle_weight = config.get('assessment', 'angle_weight')
+    area_weight = config.get('assessment', 'area_weight')
+    distance_weight = config.get('assessment', 'distance_weight')
+    free_span_threshold = config.get('assessment', 'free_span_threshold')
+
     if angle_degrees is None:
         angle_degrees = 0
     if enclosed_area is None:
@@ -72,10 +76,8 @@ def assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_oce
         relative_distance_to_ocean_floor = 0
 
     normalized_angle = min(abs(angle_degrees) / 90.0, 1.0)
-    
     circle_area = np.pi * (radius ** 2)
     normalized_area = (1 - min(enclosed_area / circle_area, 1.0))
-    
     normalized_distance = min(relative_distance_to_ocean_floor, 1.0)
     
     stability_score = (normalized_angle * angle_weight +
@@ -83,12 +85,12 @@ def assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_oce
                        normalized_distance * distance_weight)
     
     stability_percentage = (1.0 - stability_score) * 100
-    
     free_span_status = "Free-span" if relative_distance_to_ocean_floor > free_span_threshold else "Not in free-span"
     
     return free_span_status, stability_percentage
 
-def reduce_resolution_fast(x, y, num_bins=500):
+def reduce_resolution_fast(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    num_bins = config.get('interpolation', 'num_bins')
     min_x, max_x = np.min(x), np.max(x)
     bins = np.linspace(min_x, max_x, num_bins)
     bin_indices = np.digitize(x, bins) - 1
@@ -106,7 +108,7 @@ def reduce_resolution_fast(x, y, num_bins=500):
     
     return np.array(reduced_x), np.array(reduced_y)
 
-def extract_ground_truth(label_map, clustering_params):
+def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[float, None]:
     images_folder = "images/real"
     os.makedirs(images_folder, exist_ok=True)
     label_map_unique_values = np.unique(label_map)
@@ -127,7 +129,7 @@ def extract_ground_truth(label_map, clustering_params):
         # Reduce resolution for curve points
         curve_x, curve_y = reduce_resolution_fast(curve_x, curve_y)
 
-        x_circle, y_circle, radius, common_mask = detect_circle(circle_x, circle_y, clustering_params)
+        x_circle, y_circle, radius, common_mask = detect_circle(circle_x, circle_y, clustering_params, is_real=is_real)
         if x_circle is None or y_circle is None or radius is None:
             print("GROUND TRUTH: Circle detection failed.")
             return None
@@ -137,34 +139,40 @@ def extract_ground_truth(label_map, clustering_params):
         
         enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
         
-        print(f"GROUND TRUTH: Enclosed Area: {enclosed_area}")
-        print(f"GROUND TRUTH: Percentage Enclosed: {enclosed_percentage}%")
-        print(f"GROUND TRUTH: Angle of seafloor under pipe: {angle_degrees} degrees")
-        print(f"GROUND TRUTH: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
+        print_assessment_results("GROUND TRUTH", enclosed_area, enclosed_percentage, angle_degrees, relative_distance_to_ocean_floor)
 
         free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
         print(f"GROUND TRUTH: Free-span Status: {free_span_status}")
         print(f"GROUND TRUTH: Stability Percentage: {stability_percentage}%")
 
-        
-        plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type = 'real')
+        plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type='real')
 
         return stability_percentage
-        
+
     return None
-        
-def run_pipeline_seafloor_detection(mesh_paths, slice_position, sonar_positions, angles, max_range, angle_width, num_rays, clustering_params_signal, get_ground_truth=False, clustering_params_real=None):
+
+def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percentage: float, angle_degrees: float, relative_distance_to_ocean_floor: float) -> None:
+    print(f"{prefix}: Enclosed Area: {enclosed_area}")
+    print(f"{prefix}: Percentage Enclosed: {enclosed_percentage}%")
+    print(f"{prefix}: Angle of seafloor under pipe: {angle_degrees} degrees")
+    print(f"{prefix}: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
+
+def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angles: List[int], get_ground_truth: bool = False) -> Union[float, Tuple[float, float]]:
+    clustering_params = config.clustering_params
+
     images_folder = "images/signal"
     os.makedirs(images_folder, exist_ok=True)
 
-    signal_map, label_map = run_ideal_mesh_sonar_scan_simulation(mesh_paths, 'x', slice_position, sonar_positions, angles, max_range, angle_width, num_rays)
+    signal_map, label_map = run_ideal_mesh_sonar_scan_simulation(
+        sonar_positions=sonar_positions, angles=angles
+    )
 
     signal_map = np.array(signal_map)
 
     x = signal_map[:, 0]
     y = signal_map[:, 1]
     
-    x_circle, y_circle, radius, common_mask = detect_circle(x, y, clustering_params_signal)
+    x_circle, y_circle, radius, common_mask = detect_circle(x, y, clustering_params)
     if x_circle is not None and y_circle is not None and radius is not None:
         print(f"SIGNAL: Fitted Circle: Center = ({x_circle}, {y_circle}), Radius = {radius}")
         plot_and_save_points(x, y, common_mask, 'Common Circle Points', images_folder)
@@ -174,10 +182,7 @@ def run_pipeline_seafloor_detection(mesh_paths, slice_position, sonar_positions,
          
         enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
 
-        print(f"SIGNAL: Enclosed Area: {enclosed_area}")
-        print(f"SIGNAL: Percentage Enclosed: {enclosed_percentage}%")
-        print(f"SIGNAL: Angle of seafloor under pipe: {angle_degrees} degrees")
-        print(f"SIGNAL: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
+        print_assessment_results("SIGNAL", enclosed_area, enclosed_percentage, angle_degrees, relative_distance_to_ocean_floor)
 
         free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
         print(f"SIGNAL: Free-span Status: {free_span_status}")
@@ -186,9 +191,10 @@ def run_pipeline_seafloor_detection(mesh_paths, slice_position, sonar_positions,
         plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
         
         if get_ground_truth:
-            ground_truth_stability_percentage = extract_ground_truth(label_map, clustering_params_real)
+            ground_truth_stability_percentage = extract_ground_truth(label_map, clustering_params, is_real=True)
             return stability_percentage, ground_truth_stability_percentage
 
         return stability_percentage
     else:
         print("SIGNAL: No common points found among all clustering algorithms.")
+        return None

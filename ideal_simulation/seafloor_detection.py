@@ -3,18 +3,29 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
+from config import config
+from typing import List, Tuple, Union
 
-def exclude_points_near_circle(x, y, xc, yc, radius, margin=10.0):
+def exclude_points_near_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: float, radius: float, margin: float = None) -> Tuple[np.ndarray, np.ndarray]:
+    if margin is None:
+        margin = config.get('interpolation', 'circle_point_margin')
     distances = np.sqrt((x - xc) ** 2 + (y - yc) ** 2)
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def exclude_outliers(x, y, spline, threshold=10.0):
+def exclude_outliers(x: np.ndarray, y: np.ndarray, spline: UnivariateSpline, threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
+    if threshold is None:
+        threshold = config.get('interpolation', 'curve_outlier_threshold')
     residuals = y - spline(x)
     mask = np.abs(residuals) < threshold
     return x[mask], y[mask]
 
-def interpolate_remaining_points(x, y, smoothing_factor=5.0, outlier_threshold=10.0):
+def interpolate_remaining_points(x: np.ndarray, y: np.ndarray, smoothing_factor: float = None, outlier_threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
+    if smoothing_factor is None:
+        smoothing_factor = config.get('interpolation', 'smoothing_factor')
+    if outlier_threshold is None:
+        outlier_threshold = config.get('interpolation', 'outlier_threshold')
+
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
@@ -39,7 +50,7 @@ def interpolate_remaining_points(x, y, smoothing_factor=5.0, outlier_threshold=1
         print(f"Re-fitting spline failed: {e}")
         return x_filtered, y_filtered 
 
-def plot_and_save_points(x, y, mask, title, folder):
+def plot_and_save_points(x: np.ndarray, y: np.ndarray, mask: np.ndarray, title: str, folder: str) -> None:
     plt.figure()
     plt.scatter(x, y, color='gray', label='Non-circle points')
     if np.any(mask):
@@ -56,7 +67,7 @@ def plot_and_save_points(x, y, mask, title, folder):
     plt.savefig(file_path)
     plt.close()
 
-def plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, folder):
+def plot_and_save_all_points_with_circle(x: np.ndarray, y: np.ndarray, common_mask: np.ndarray, xc: float, yc: float, radius: float, folder: str) -> None:
     plt.figure()
     plt.scatter(x, y, color='gray', label='Non-circle points')
     plt.scatter(x[common_mask], y[common_mask], color='red', label='Common circle points')
@@ -76,7 +87,7 @@ def plot_and_save_all_points_with_circle(x, y, common_mask, xc, yc, radius, fold
     plt.savefig(file_path)
     plt.close()
 
-def plot_curve_and_circle(x, y, xc, yc, radius, folder):
+def plot_curve_and_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: float, radius: float, folder: str) -> Tuple[np.ndarray, np.ndarray]:
     x_remaining, y_remaining = exclude_points_near_circle(x, y, xc, yc, radius)
     x_new, y_new = interpolate_remaining_points(x_remaining, y_remaining)
 
@@ -97,7 +108,7 @@ def plot_curve_and_circle(x, y, xc, yc, radius, folder):
 
     return x_new, y_new
 
-def calculate_enclosed_area_and_percentage(curve_x, curve_y, xc, yc, radius):
+def calculate_enclosed_area_and_percentage(curve_x: np.ndarray, curve_y: np.ndarray, xc: float, yc: float, radius: float) -> Tuple[float, float, Union[Polygon, None]]:
     curve = LineString(np.column_stack([curve_x, curve_y]))
     circle = Point(xc, yc).buffer(radius)
     intersection = curve.intersection(circle)
@@ -130,8 +141,8 @@ def calculate_enclosed_area_and_percentage(curve_x, curve_y, xc, yc, radius):
 
     return enclosed_area, enclosed_percentage, enclosed_polygon
 
-def plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, xc, yc, radius, enclosed_polygon, folder, map_type = 'signal'):
-    plt.figure(figsize=(15,15))
+def plot_and_save_intersections(x: np.ndarray, y: np.ndarray, common_mask: np.ndarray, curve_x: np.ndarray, curve_y: np.ndarray, xc: float, yc: float, radius: float, enclosed_polygon: Union[Polygon, None], folder: str, map_type: str = 'signal') -> None:
+    plt.figure(figsize=(15, 15))
     if map_type == 'signal':
         plt.scatter(x[common_mask], y[common_mask], color='red', label='Filtered points')
         plt.scatter(x, y, color='gray', label='All points')

@@ -1,56 +1,66 @@
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, List, Dict, Any
 
 class Config:
     def __init__(self):
-        self.dimensions: Tuple[int, int] = (500, 1000)  # (y, x)
-        self.pipe_center: Tuple[int, int] = (90, 500)   # (y, x)
+        self.dimensions: Tuple[int, int] = (500, 1000)
+        self.pipe_center: Tuple[int, int] = (90, 500)
         self.pipe_radius: int = 30
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
-        self.seperate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
+        self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
         
         self.sonar: Dict[str, Any] = {
             "max_range": 1000,
             "angle_width": 60,
-            "num_rays": 120
+            "num_rays": 120,
+            "sonar_positions": [(50, 20), (30, 40)],
+            "angles": [90, 45],
         }
-        self.clustering: Dict[str, Dict[str, Any]] = {
+        self.clustering_params: Dict[str, Dict[str, Any]] = {
             "dbscan": {
-                "eps": 0.5,
+                "eps": 10,
                 "min_samples": 10
-            },
-            "kmeans": {
-                "n_clusters": 3
-            },
-            "agglomerative": {
-                "n_clusters": 3
             },
             "ransac": {
                 "min_samples": 10,
-                "residual_threshold": 9,
+                "residual_threshold": 5,
                 "max_trials": 1000
             }
         }
+
         self.plotting: Dict[str, Any] = {
             "room_color": 'gray',
             "sonar_position_color": 'red',
             "sonar_ray_color": 'yellow',
-            "plot_size": [14, 6]
+            "plot_size": [14, 6],
+            "image_size": (15, 15),
+            "scatter_point_size": 50,
+            "alpha": 0.5,
         }
-        self.ground_wave: Dict[str, Any] = {
-            "amplitude": 2,
-            "frequency": 0.05,
-            "base_level": 45,
-            "repeat": 1024
-        }
-        self.ray_cast: Dict[str, float] = {
-            "strong_signal": 1.5,
-            "medium_signal": 0.5
+        self.assessment: Dict[str, Any] = {
+            "angle_weight": 0.3,
+            "area_weight": 0.3,
+            "distance_weight": 0.4,
+            "free_span_threshold": 0.1
         }
         self.mesh_processing: Dict[str, Any] = {
-            "grid_size": (300, 300),
+            "slice_axis": 'x',
+            "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 3,
-            "label_map_resolution": 1,
-            "slice_axes": ['x', 'y', 'z']
+            "grid_size": (300, 300),
+            "slice_position": 15,
+            "slice_positions": list(range(-25, 25, 5)),
+            "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
+        }
+        self.interpolation: Dict[str, Any] = {
+            "num_bins": 500,
+            "smoothing_factor": 5.0,
+            "curve_outlier_threshold": 10.0,
+            "circle_point_margin": 30.0
+        }
+        self.ray_cast: Dict[str, Any] = {
+            "strong_signal": 2,
+            "medium_signal": 1,
+            "no_signal": 0
         }
 
     def get(self, section: str, key: str) -> Any:
