@@ -112,3 +112,6 @@ public/uploads
 
 # virtualenv
 /sonar-simulator
+
+#images
+*.png
