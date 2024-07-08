@@ -108,7 +108,7 @@ def reduce_resolution_fast(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np
     
     return np.array(reduced_x), np.array(reduced_y)
 
-def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[float, None]:
+def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]:
     images_folder = "images/real"
     os.makedirs(images_folder, exist_ok=True)
     label_map_unique_values = np.unique(label_map)
@@ -146,8 +146,8 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
         print(f"GROUND TRUTH: Stability Percentage: {stability_percentage}%")
 
         plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type='real')
-
-        return stability_percentage
+        
+        return x_circle, y_circle, radius, curve_x, curve_y
 
     return None
 
@@ -157,7 +157,7 @@ def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percent
     print(f"{prefix}: Angle of seafloor under pipe: {angle_degrees} degrees")
     print(f"{prefix}: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
 
-def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angles: List[int], get_ground_truth: bool = False) -> Union[float, Tuple[float, float]]:
+def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angles: List[int], get_ground_truth: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
     clustering_params = config.clustering_params
 
     images_folder = "images/signal"
@@ -179,22 +179,21 @@ def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angl
         plot_and_save_all_points_with_circle(x, y, common_mask, x_circle, y_circle, radius, images_folder)
 
         curve_x, curve_y = plot_curve_and_circle(x, y, x_circle, y_circle, radius, images_folder)
-         
-        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
 
+        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
         print_assessment_results("SIGNAL", enclosed_area, enclosed_percentage, angle_degrees, relative_distance_to_ocean_floor)
 
         free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
         print(f"SIGNAL: Free-span Status: {free_span_status}")
         print(f"SIGNAL: Stability Percentage: {stability_percentage}%")
-
-        plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
         
+        plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
+         
         if get_ground_truth:
-            ground_truth_stability_percentage = extract_ground_truth(label_map, clustering_params, is_real=True)
-            return stability_percentage, ground_truth_stability_percentage
+            ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
+            return x_circle, y_circle, radius, curve_x, curve_y, ground_truth_params
 
-        return stability_percentage
+        return x_circle, y_circle, radius, curve_x, curve_y
     else:
         print("SIGNAL: No common points found among all clustering algorithms.")
         return None
