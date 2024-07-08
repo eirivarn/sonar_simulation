@@ -2,7 +2,8 @@ from ideal_simulation.basic_sonar import run_ideal_basic_sonar_simulation
 from ideal_simulation.multiple_sonar import run_ideal_multiple_sonar_simulation
 from ideal_simulation.terrain_sonar_scan import run_ideal_mesh_sonar_scan_simulation
 from ideal_simulation.pipeline_seafloor_analysis import run_pipeline_seafloor_detection
-from ideal_simulation.world_mapping import run_3d_seafloor_analysis
+from ideal_simulation.world_mapping import run_3d_mapping_simulation
+from config import config
 
 def main():
     # ************ Simulation Parameters ************ 
@@ -10,6 +11,7 @@ def main():
     sonar_positions_2 =  [(300, 400), (300, 700)] # (y, x)
     
     slice_position = 0
+    slice_positions = config.get('mesh_processing', 'slice_positions')
     
     angles = [160, 200]  # direction in degrees (mid-point direction pointing down)x
 
@@ -23,10 +25,10 @@ def main():
     # run_ideal_mesh_sonar_scan_simulation(sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation with Clustering ************
-    run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True)
+    # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True)
     
     # ************ Run Detection Evaluation ************
-    # run_3d_seafloor_analysis(sonar_positions_1, angles)
+    run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)
     
     
 if __name__ == "__main__":

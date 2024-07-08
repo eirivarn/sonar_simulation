@@ -34,6 +34,8 @@ class Config:
             "image_size": (15, 15),
             "scatter_point_size": 50,
             "alpha": 0.5,
+            "pipe_color_map": 'viridis',
+            "seabed_color_map": 'terrain'
         }
         self.assessment: Dict[str, Any] = {
             "angle_weight": 0.3,
@@ -46,7 +48,7 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 3,
             "grid_size": (300, 300),
-            "slice_positions": list(range(-25, 25, 10)),
+            "slice_positions": list(range(-50, 50, 5)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {

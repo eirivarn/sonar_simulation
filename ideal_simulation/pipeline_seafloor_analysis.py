@@ -133,11 +133,26 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
         if x_circle is None or y_circle is None or radius is None:
             print("GROUND TRUTH: Circle detection failed.")
             return None
-        print(f"GROUND TRUTH: Fitted Circle: Center = ({x_circle}, {y_circle}), Radius = {radius}")
-        plot_and_save_all_points_with_circle(circle_x, circle_y, common_mask, x_circle, y_circle, radius, images_folder)
-        curve_x, curve_y = plot_curve_and_circle(curve_x, curve_y, x_circle, y_circle, radius, images_folder)
+
+        # Calculate the translation required to move (xc, yc) to (0, 0)
+        translation_x = -x_circle
+        translation_y = -y_circle
+
+        # Apply the translation to all points
+        circle_x_translated = circle_x + translation_x
+        circle_y_translated = circle_y + translation_y
+        curve_x_translated = curve_x + translation_x
+        curve_y_translated = curve_y + translation_y
+        x_circle_translated = x_circle + translation_x
+        y_circle_translated = y_circle + translation_y
         
-        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
+        print(f"GROUND TRUTH: Fitted Circle: Center = ({x_circle_translated}, {y_circle_translated}), Radius = {radius}")
+        
+
+        plot_and_save_all_points_with_circle(circle_x_translated, circle_y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
+        curve_x_translated, curve_y_translated = plot_curve_and_circle(curve_x_translated, curve_y_translated, x_circle_translated, y_circle_translated, radius, images_folder)
+        
+        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x_translated, curve_y_translated, x_circle_translated, y_circle_translated, radius)
         
         print_assessment_results("GROUND TRUTH", enclosed_area, enclosed_percentage, angle_degrees, relative_distance_to_ocean_floor)
 
@@ -145,9 +160,9 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
         print(f"GROUND TRUTH: Free-span Status: {free_span_status}")
         print(f"GROUND TRUTH: Stability Percentage: {stability_percentage}%")
 
-        plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type='real')
+        plot_and_save_intersections(circle_x_translated, circle_y_translated, common_mask, curve_x_translated, curve_y_translated, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder, map_type='real')
         
-        return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage
+        return x_circle_translated, y_circle_translated, radius, curve_x_translated, curve_y_translated, free_span_status, stability_percentage
     
     print('GROUND TRUTH: No unique values found in the label map.')
     return None
@@ -182,26 +197,38 @@ def run_pipeline_seafloor_detection(slice_position: int,
     
     x_circle, y_circle, radius, common_mask = detect_circle(x, y, clustering_params)
     if x_circle is not None and y_circle is not None and radius is not None:
-        print(f"SIGNAL: Fitted Circle: Center = ({x_circle}, {y_circle}), Radius = {radius}")
-        plot_and_save_points(x, y, common_mask, 'Common Circle Points', images_folder)
-        plot_and_save_all_points_with_circle(x, y, common_mask, x_circle, y_circle, radius, images_folder)
 
-        curve_x, curve_y = plot_curve_and_circle(x, y, x_circle, y_circle, radius, images_folder)
+        # Calculate the translation required to move (xc, yc) to (0, 0)
+        translation_x = -x_circle
+        translation_y = -y_circle
 
-        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle, y_circle, radius)
+        # Apply the translation to all points
+        x_translated = x + translation_x
+        y_translated = y + translation_y
+        x_circle_translated = x_circle + translation_x
+        y_circle_translated = y_circle + translation_y
+        
+        print(f"SIGNAL: Fitted Circle: Center = ({x_circle_translated}, {y_circle_translated}), Radius = {radius}")
+
+        plot_and_save_points(x_translated, y_translated, common_mask, 'Common Circle Points', images_folder)
+        plot_and_save_all_points_with_circle(x_translated, y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
+
+        curve_x, curve_y = plot_curve_and_circle(x_translated, y_translated, x_circle_translated, y_circle_translated, radius, images_folder)
+
+        enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle_translated, y_circle_translated, radius)
         print_assessment_results("SIGNAL", enclosed_area, enclosed_percentage, angle_degrees, relative_distance_to_ocean_floor)
 
         free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
         print(f"SIGNAL: Free-span Status: {free_span_status}")
         print(f"SIGNAL: Stability Percentage: {stability_percentage}%")
         
-        plot_and_save_intersections(x, y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder)
+        plot_and_save_intersections(x_translated, y_translated, common_mask, curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
          
         if get_ground_truth:
             ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
-            return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, ground_truth_params
+            return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, ground_truth_params
 
-        return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage
+        return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage
     else:
         print("SIGNAL: No common points found among all clustering algorithms.")
         return None

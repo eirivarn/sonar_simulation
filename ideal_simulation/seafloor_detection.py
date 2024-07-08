@@ -41,6 +41,7 @@ def plot_and_save_points(x: np.ndarray, y: np.ndarray, mask: np.ndarray, title: 
     plt.close()
 
 def plot_and_save_all_points_with_circle(x: np.ndarray, y: np.ndarray, common_mask: np.ndarray, xc: float, yc: float, radius: float, folder: str) -> None:
+    plt.close()
     plt.figure()
     plt.scatter(x, y, color='gray', label='Non-circle points')
     plt.scatter(x[common_mask], y[common_mask], color='red', label='Common circle points')
@@ -61,6 +62,7 @@ def plot_and_save_all_points_with_circle(x: np.ndarray, y: np.ndarray, common_ma
     plt.close()
 
 def plot_curve_and_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: float, radius: float, folder: str) -> Tuple[np.ndarray, np.ndarray]:
+    plt.close()
     x_remaining, y_remaining = exclude_points_near_circle(x, y, xc, yc, radius)
     x_new, y_new = interpolate_remaining_points(x_remaining, y_remaining)
 
@@ -115,6 +117,7 @@ def calculate_enclosed_area_and_percentage(curve_x: np.ndarray, curve_y: np.ndar
     return enclosed_area, enclosed_percentage, enclosed_polygon
 
 def plot_and_save_intersections(x: np.ndarray, y: np.ndarray, common_mask: np.ndarray, curve_x: np.ndarray, curve_y: np.ndarray, xc: float, yc: float, radius: float, enclosed_polygon: Union[Polygon, None], folder: str, map_type: str = 'signal') -> None:
+    plt.close()
     plt.figure(figsize=(15, 15))
     if map_type == 'signal':
         plt.scatter(x[common_mask], y[common_mask], color='red', label='Filtered points')
