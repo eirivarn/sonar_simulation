@@ -7,6 +7,7 @@ class Config:
         self.pipe_radius: int = 30
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
+        self.show_plots: bool = False
         
         self.sonar: Dict[str, Any] = {
             "max_range": 1300,

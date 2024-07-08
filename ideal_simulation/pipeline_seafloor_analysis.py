@@ -161,7 +161,7 @@ def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percent
 def run_pipeline_seafloor_detection(slice_position: int, 
                                     sonar_positions: List[Tuple[int, int]], 
                                     angles: List[int], 
-                                    get_ground_truth: bool = False
+                                    get_ground_truth: bool = False,
                                     ) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
     
     clustering_params = config.clustering_params

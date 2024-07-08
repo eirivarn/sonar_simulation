@@ -12,14 +12,6 @@ def exclude_points_near_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: floa
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def exclude_outliers(x: np.ndarray, y: np.ndarray, threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
-    if threshold is None:
-        threshold = config.get('interpolation', 'curve_outlier_threshold')
-    # In the case of linear interpolation, we assume outliers are defined by some external criteria, here is a placeholder.
-    # Implement your outlier detection mechanism if needed.
-    mask = np.abs(y - np.mean(y)) < threshold  # Example placeholder
-    return x[mask], y[mask]
-
 def interpolate_remaining_points(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]

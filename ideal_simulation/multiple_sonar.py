@@ -50,11 +50,10 @@ def find_farthest_points(sonar_positions: List[Tuple[int, int]]) -> Tuple[Union[
                 point2 = sonar_positions[j]
     return point1, point2
 
-def plot_both_views(world: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[int, int], sonar_positions: List[Tuple[int, int]], all_sonar_data: List[List[Tuple[int, int]]], angles: List[float], angle_width: float, max_range: int, all_theta: List[List[float]], plot: bool = True) -> List[Tuple[float, float, int]]:
+def plot_both_views(world: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[int, int], sonar_positions: List[Tuple[int, int]], all_sonar_data: List[List[Tuple[int, int]]], all_theta: List[List[float]]) -> List[Tuple[float, float, int]]:
     plot_size: List[int] = config.get('plotting', 'plot_size')
     room_color: str = config.get('plotting', 'room_color')
-    sonar_position_color: str = config.get('plotting', 'sonar_position_color')
-    sonar_ray_color: str = config.get('plotting', 'sonar_ray_color')
+    max_range: int = config.get('sonar', 'max_range')
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=plot_size)
     ax1.imshow(world, extent=(y_range[0], y_range[1], z_range[0], z_range[1]), cmap=room_color, origin='lower', interpolation='bilinear')
@@ -87,7 +86,7 @@ def plot_both_views(world: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[
 
     transformed_coords: List[Tuple[float, float, int]] = transform_to_reference_sonar(ref_pos, ref_angle, global_coords)
     
-    if plot:
+    if config.show_plots:
         ax2 = plt.subplot(122, projection='polar')
         ax2.set_theta_zero_location('S')
         ax2.set_theta_direction(-1)

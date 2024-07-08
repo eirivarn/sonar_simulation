@@ -78,13 +78,14 @@ def plot_and_return_label_map(label_map: np.ndarray, y_range: Tuple[int, int], z
 
     rescaled_map = griddata(points_flatten, values_flatten, (grid_y, grid_z), method='nearest')
 
-    plt.figure(figsize=(12, 6))
-    plt.imshow(rescaled_map.T, cmap='viridis', origin='lower')
-    plt.colorbar()
-    plt.title(title)
-    plt.xlabel('Y Dimension')
-    plt.ylabel('Z Dimension')
-    plt.show()
+    if config.show_plots:
+        plt.figure(figsize=(12, 6))
+        plt.imshow(rescaled_map.T, cmap='viridis', origin='lower')
+        plt.colorbar()
+        plt.title(title)
+        plt.xlabel('Y Dimension')
+        plt.ylabel('Z Dimension')
+        plt.show()
 
     return rescaled_map.T
 
@@ -98,25 +99,26 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
         x = r * np.sin(theta)
         cartesian_coords.append((x, y, strength))
     
-    # Plotting the Cartesian coordinates
-    x_coords = [coord[0] for coord in cartesian_coords]
-    y_coords = [coord[1] for coord in cartesian_coords]
-    strengths = [coord[2] for coord in cartesian_coords]
+    if config.show_plots:
+        # Plotting the Cartesian coordinates
+        x_coords = [coord[0] for coord in cartesian_coords]
+        y_coords = [coord[1] for coord in cartesian_coords]
+        strengths = [coord[2] for coord in cartesian_coords]
 
-    plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(x_coords, y_coords, c=strengths, cmap='viridis', s=10 * np.array(strengths), alpha=0.75)
-    plt.colorbar(scatter, label='Strength')
-    plt.xlabel('X Coordinate')
-    plt.ylabel('Y Coordinate')
-    plt.title('Cartesian Coordinates with Strengths')
+        plt.figure(figsize=(10, 8))
+        scatter = plt.scatter(x_coords, y_coords, c=strengths, cmap='viridis', s=10 * np.array(strengths), alpha=0.75)
+        plt.colorbar(scatter, label='Strength')
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.title('Cartesian Coordinates with Strengths')
 
-    # Calculate the aspect ratio from the y and z ranges
-    y_range_span = y_range[1] - y_range[0]
-    z_range_span = z_range[1] - z_range[0]
-    aspect_ratio = y_range_span / z_range_span
-    
-    plt.gca().set_aspect(aspect_ratio, adjustable='box')
-    plt.show()
+        # Calculate the aspect ratio from the y and z ranges
+        y_range_span = y_range[1] - y_range[0]
+        z_range_span = z_range[1] - z_range[0]
+        aspect_ratio = y_range_span / z_range_span
+        
+        plt.gca().set_aspect(aspect_ratio, adjustable='box')
+        plt.show()
     
     return cartesian_coords
 
@@ -171,7 +173,7 @@ def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: L
         all_sonar_data.append(sonar_data)
         all_theta.append(theta)
 
-    transformed_coords = plot_both_views(label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta, True)
+    transformed_coords = plot_both_views(label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, all_theta)
 
     cartesian_coords = transform_and_plot_coordinates(transformed_coords, y_range, padded_z_range)
 

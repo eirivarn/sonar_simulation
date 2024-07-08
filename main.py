@@ -9,7 +9,7 @@ def main():
     sonar_positions_1 =  [(1000, 600), (1000, 1400)] # (y, x)
     sonar_positions_2 =  [(300, 400), (300, 700)] # (y, x)
     
-    slice_position = -10
+    slice_position = 0
     
     angles = [160, 200]  # direction in degrees (mid-point direction pointing down)x
 
