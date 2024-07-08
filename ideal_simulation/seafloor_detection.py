@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point, Polygon
 import os
@@ -13,42 +12,24 @@ def exclude_points_near_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: floa
     mask = (distances < (radius - margin)) | (distances > (radius + margin))
     return x[mask], y[mask]
 
-def exclude_outliers(x: np.ndarray, y: np.ndarray, spline: UnivariateSpline, threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
+def exclude_outliers(x: np.ndarray, y: np.ndarray, threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
     if threshold is None:
         threshold = config.get('interpolation', 'curve_outlier_threshold')
-    residuals = y - spline(x)
-    mask = np.abs(residuals) < threshold
+    # In the case of linear interpolation, we assume outliers are defined by some external criteria, here is a placeholder.
+    # Implement your outlier detection mechanism if needed.
+    mask = np.abs(y - np.mean(y)) < threshold  # Example placeholder
     return x[mask], y[mask]
 
-def interpolate_remaining_points(x: np.ndarray, y: np.ndarray, smoothing_factor: float = None, outlier_threshold: float = None) -> Tuple[np.ndarray, np.ndarray]:
-    if smoothing_factor is None:
-        smoothing_factor = config.get('interpolation', 'smoothing_factor')
-    if outlier_threshold is None:
-        outlier_threshold = config.get('interpolation', 'outlier_threshold')
-
+def interpolate_remaining_points(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     sorted_indices = np.argsort(x)
     x_sorted = x[sorted_indices]
     y_sorted = y[sorted_indices]
 
-    try:
-        spline = UnivariateSpline(x_sorted, y_sorted, s=smoothing_factor)
-        x_filtered, y_filtered = exclude_outliers(x_sorted, y_sorted, spline, outlier_threshold)
-    except Exception as e:
-        print(f"Initial spline fitting failed: {e}")
-        return x_sorted, y_sorted  # Return the sorted original points if spline fitting fails
+    # Linear interpolation between points
+    x_new = np.linspace(x_sorted.min(), x_sorted.max(), 500)
+    y_new = np.interp(x_new, x_sorted, y_sorted)
 
-    if len(x_filtered) < 2 or len(y_filtered) < 2:
-        print("Not enough points after filtering outliers")
-        return x_sorted, y_sorted  # Return the sorted original points if too many points are filtered
-
-    try:
-        spline = UnivariateSpline(x_filtered, y_filtered, s=smoothing_factor)
-        x_new = np.linspace(x_filtered.min(), x_filtered.max(), 500)
-        y_new = spline(x_new)
-        return x_new, y_new
-    except Exception as e:
-        print(f"Re-fitting spline failed: {e}")
-        return x_filtered, y_filtered 
+    return x_new, y_new
 
 def plot_and_save_points(x: np.ndarray, y: np.ndarray, mask: np.ndarray, title: str, folder: str) -> None:
     plt.figure()

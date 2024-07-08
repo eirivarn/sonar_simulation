@@ -9,7 +9,7 @@ class Config:
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
         
         self.sonar: Dict[str, Any] = {
-            "max_range": 1000,
+            "max_range": 1300,
             "angle_width": 60,
             "num_rays": 120,
             "sonar_positions": [(50, 20), (30, 40)],
@@ -45,13 +45,12 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 3,
             "grid_size": (300, 300),
-            "slice_position": 15,
-            "slice_positions": list(range(-25, 25, 5)),
+            "slice_positions": list(range(-25, 25, 10)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
             "num_bins": 500,
-            "smoothing_factor": 5.0,
+            "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
             "circle_point_margin": 10.0
         }
