@@ -108,7 +108,7 @@ def reduce_resolution_fast(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np
     
     return np.array(reduced_x), np.array(reduced_y)
 
-def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]:
+def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float]]:
     images_folder = "images/real"
     os.makedirs(images_folder, exist_ok=True)
     label_map_unique_values = np.unique(label_map)
@@ -147,8 +147,9 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
 
         plot_and_save_intersections(circle_x, circle_y, common_mask, curve_x, curve_y, x_circle, y_circle, radius, enclosed_polygon, images_folder, map_type='real')
         
-        return x_circle, y_circle, radius, curve_x, curve_y
-
+        return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage
+    
+    print('GROUND TRUTH: No unique values found in the label map.')
     return None
 
 def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percentage: float, angle_degrees: float, relative_distance_to_ocean_floor: float) -> None:
@@ -157,14 +158,21 @@ def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percent
     print(f"{prefix}: Angle of seafloor under pipe: {angle_degrees} degrees")
     print(f"{prefix}: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
 
-def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angles: List[int], get_ground_truth: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
+def run_pipeline_seafloor_detection(slice_position: int, 
+                                    sonar_positions: List[Tuple[int, int]], 
+                                    angles: List[int], 
+                                    get_ground_truth: bool = False
+                                    ) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
+    
     clustering_params = config.clustering_params
 
     images_folder = "images/signal"
     os.makedirs(images_folder, exist_ok=True)
 
     signal_map, label_map = run_ideal_mesh_sonar_scan_simulation(
-        sonar_positions=sonar_positions, angles=angles
+        slice_position=slice_position,
+        sonar_positions=sonar_positions, 
+        angles=angles
     )
 
     signal_map = np.array(signal_map)
@@ -191,9 +199,9 @@ def run_pipeline_seafloor_detection(sonar_positions: List[Tuple[int, int]], angl
          
         if get_ground_truth:
             ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
-            return x_circle, y_circle, radius, curve_x, curve_y, ground_truth_params
+            return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, ground_truth_params
 
-        return x_circle, y_circle, radius, curve_x, curve_y
+        return x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage
     else:
         print("SIGNAL: No common points found among all clustering algorithms.")
         return None

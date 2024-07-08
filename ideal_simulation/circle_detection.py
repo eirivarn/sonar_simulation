@@ -42,22 +42,22 @@ def fit_circle_to_points(x: np.ndarray, y: np.ndarray) -> Tuple[float, float, fl
     return xc, yc, radius
 
 # Define a function to cluster circle points
-def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str = 'DBSCAN', is_real: bool = False, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str, is_real: bool = False, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     points = np.column_stack((x, y))
 
     if is_real:
         return points, np.ones(points.shape[0], dtype=bool)
 
-    if algorithm == 'DBSCAN':
+    if algorithm == 'dbscan':
         clustering = DBSCAN(**kwargs).fit(points)
-    elif algorithm == 'KMeans':
+    elif algorithm == 'kmeans':
         clustering = KMeans(**kwargs).fit(points)
-    elif algorithm == 'Agglomerative':
+    elif algorithm == 'agglomerative':
         clustering = AgglomerativeClustering(**kwargs).fit(points)
-    elif algorithm == 'RANSAC':
-        model, inliers = ransac(points, CircleModel, min_samples=config.get('clustering', 'ransac')['min_samples'], 
-                                residual_threshold=config.get('clustering', 'ransac')['residual_threshold'], 
-                                max_trials=config.get('clustering', 'ransac')['max_trials'])
+    elif algorithm == 'ransac':
+        model, inliers = ransac(points, CircleModel, min_samples=config.get('clustering_params', 'ransac')['min_samples'], 
+                                residual_threshold=config.get('clustering_params', 'ransac')['residual_threshold'], 
+                                max_trials=config.get('clustering_params', 'ransac')['max_trials'])
         return points[inliers], inliers
 
     labels = clustering.labels_
@@ -70,9 +70,10 @@ def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str = 'DBSCAN
     return np.array([]), np.zeros_like(labels, dtype=bool)
 
 # Define a function to detect circles and save plots
-def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], algorithms: List[str] = ['KMeans', 'Agglomerative'], is_real: bool = False) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
+def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
     circle_points_dict: Dict[str, np.ndarray] = {}
-
+    algorithms = list(clustering_params.keys())
+    
     for alg in algorithms:
         points, mask = cluster_circle_points(x, y, algorithm=alg, is_real=is_real, **clustering_params.get(alg, {}))
         circle_points_dict[alg] = points

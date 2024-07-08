@@ -15,15 +15,13 @@ class Config:
             "sonar_positions": [(50, 20), (30, 40)],
             "angles": [90, 45],
         }
+        
         self.clustering_params: Dict[str, Dict[str, Any]] = {
-            "dbscan": {
-                "eps": 10,
-                "min_samples": 10
+            "kmeans": {
+                "n_clusters": 3
             },
-            "ransac": {
-                "min_samples": 10,
-                "residual_threshold": 5,
-                "max_trials": 1000
+            "agglomerative": {
+                "n_clusters": 3
             }
         }
 
@@ -55,7 +53,7 @@ class Config:
             "num_bins": 500,
             "smoothing_factor": 5.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 30.0
+            "circle_point_margin": 10.0
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,

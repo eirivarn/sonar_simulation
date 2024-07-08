@@ -120,10 +120,9 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
     
     return cartesian_coords
 
-def run_ideal_mesh_sonar_scan_simulation(sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
+def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
     mesh_paths = config.separate_mesh_paths
     axis = config.get('mesh_processing', 'slice_axis')
-    position = config.get('mesh_processing', 'slice_position')
     max_range = config.get('sonar', 'max_range')
     angle_width = config.get('sonar', 'angle_width')
     num_rays = config.get('sonar', 'num_rays')
@@ -139,7 +138,7 @@ def run_ideal_mesh_sonar_scan_simulation(sonar_positions: List[Tuple[int, int]],
     slice_data_frames = []
 
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(process_mesh, path, position, axis, idx, rotation_matrix, min_y, min_z) for idx, path in enumerate(mesh_paths)]
+        futures = [executor.submit(process_mesh, path, slice_position, axis, idx, rotation_matrix, min_y, min_z) for idx, path in enumerate(mesh_paths)]
         for future in futures:
             slice_data_frame, mesh_min_y, mesh_max_y, mesh_min_z, mesh_max_z = future.result()
             if slice_data_frame is not None:
