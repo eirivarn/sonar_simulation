@@ -21,14 +21,18 @@ class Config:
             "kmeans": {
                 "n_clusters": 3
             },
-            # "agglomerative": {
-            #     "n_clusters": 3
-            # },  
-            # "ransac": {
-            #     "min_samples": 3,
-            #     "residual_threshold": 10,
-            #     "max_trials": 1000
-            # }
+            "agglomerative": {
+                "n_clusters": 3
+            },  
+            "ransac": {
+                "min_samples": 1,
+                "residual_threshold": 100,
+                "max_trials": 1000
+            },
+            "dbscan": {
+                "eps": 18,
+                "min_samples": 1,
+            }
         }
 
         self.plotting: Dict[str, Any] = {
