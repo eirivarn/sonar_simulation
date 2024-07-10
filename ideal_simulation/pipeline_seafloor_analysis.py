@@ -162,7 +162,7 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
 
         plot_and_save_intersections(circle_x_translated, circle_y_translated, common_mask, curve_x_translated, curve_y_translated, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder, map_type='real')
         
-        return x_circle_translated, y_circle_translated, radius, curve_x_translated, curve_y_translated, free_span_status, stability_percentage
+        return x_circle_translated, y_circle_translated, radius, curve_x_translated, curve_y_translated, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees
     
     print('GROUND TRUTH: No unique values found in the label map.')
     return None
@@ -226,9 +226,9 @@ def run_pipeline_seafloor_detection(slice_position: int,
          
         if get_ground_truth:
             ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
-            return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, ground_truth_params
+            return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees, ground_truth_params
 
-        return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage
+        return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees 
     else:
         print("SIGNAL: No common points found among all clustering algorithms.")
         return None

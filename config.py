@@ -10,7 +10,7 @@ class Config:
         self.show_plots: bool = False
         
         self.sonar: Dict[str, Any] = {
-            "max_range": 1300,
+            "max_range": 2000,
             "angle_width": 60,
             "num_rays": 120,
             "sonar_positions": [(50, 20), (30, 40)],
@@ -21,9 +21,14 @@ class Config:
             "kmeans": {
                 "n_clusters": 3
             },
-            "agglomerative": {
-                "n_clusters": 3
-            }
+            # "agglomerative": {
+            #     "n_clusters": 3
+            # },  
+            # "ransac": {
+            #     "min_samples": 3,
+            #     "residual_threshold": 10,
+            #     "max_trials": 1000
+            # }
         }
 
         self.plotting: Dict[str, Any] = {
@@ -48,14 +53,14 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 3,
             "grid_size": (300, 300),
-            "slice_positions": list(range(-50, 50, 20)),
+            "slice_positions": list(range(-50, 50, 1)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
             "num_bins": 500,
             "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 10.0
+            "circle_point_margin": 25.0
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,

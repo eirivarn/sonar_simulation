@@ -15,7 +15,7 @@ def draw_circle(ax, x_circle, y_circle, z, radius, stability_percentage):
 def run_3d_seafloor_analysis(sonar_positions: List[Tuple[int, int]], angles: List[int], slice_positions: List[int]) -> List[Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, float]]]:
     results = []
     for slice_position in slice_positions:
-        result = run_pipeline_seafloor_detection(slice_position, sonar_positions, angles, get_ground_truth=True)
+        result = run_pipeline_seafloor_detection(slice_position, sonar_positions, angles, get_ground_truth=False)
         results.append(result)
     return results
 
@@ -32,7 +32,12 @@ def plot_pipe(results: List[Union[None, Tuple[float, float, float, np.ndarray, n
 
     for i, result in enumerate(results):
         if result is not None:
-            x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, ground_truth_params = result
+            # Check length and unpack accordingly
+            if len(result) == 10:
+                x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
+            elif len(result) == 11:
+                x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees, additional_data = result
+
             slice_position = slice_positions[i]
             pipe_x.append(x_circle)
             pipe_y.append(slice_position)
