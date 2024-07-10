@@ -18,21 +18,22 @@ class Config:
         }
         
         self.clustering_params: Dict[str, Dict[str, Any]] = {
-            "kmeans": {
-                "n_clusters": 3
-            },
-            "agglomerative": {
-                "n_clusters": 3
-            },  
+            # "kmeans": {
+            #     "n_clusters": 3
+            # },
+            # "agglomerative": {
+            #     "n_clusters": 3
+            # },
+            # ransac and dbscan are stricter clustering methods, less point, more certainty  
             "ransac": {
                 "min_samples": 1,
-                "residual_threshold": 100,
+                "residual_threshold": 150,
                 "max_trials": 1000
             },
             "dbscan": {
-                "eps": 18,
+                "eps": 20,
                 "min_samples": 1,
-            }
+            },
         }
 
         self.plotting: Dict[str, Any] = {
@@ -64,7 +65,7 @@ class Config:
             "num_bins": 500,
             "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 25.0
+            "circle_point_margin": 35.0
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,

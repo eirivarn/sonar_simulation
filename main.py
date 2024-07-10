@@ -10,7 +10,7 @@ def main():
     # ************ Simulation Parameters ************ 
     sonar_positions_1 =  [(1500, 250)] # (y, x)
     
-    slice_position = 30
+    slice_position = -50
     slice_positions = config.get('mesh_processing', 'slice_positions')
     
     angles = [150]  # direction in degrees (mid-point direction pointing down)x

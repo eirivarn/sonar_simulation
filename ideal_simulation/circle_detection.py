@@ -6,7 +6,6 @@ from scipy.optimize import least_squares
 from typing import Tuple, List, Dict, Any, Union
 from config import config
 
-# Define CircleModel for RANSAC
 class CircleModel:
     def __init__(self):
         self.params = None
@@ -28,7 +27,6 @@ class CircleModel:
         x_m, y_m, radius = self.params
         return (x_m + radius * np.cos(t), y_m + radius * np.sin(t))
 
-# Define a function to fit a circle to points
 def fit_circle_to_points(x: np.ndarray, y: np.ndarray) -> Tuple[float, float, float]:
     x_m, y_m = np.mean(x), np.mean(y)
     r_initial = np.mean(np.sqrt((x - x_m) ** 2 + (y - y_m) ** 2))
@@ -41,7 +39,6 @@ def fit_circle_to_points(x: np.ndarray, y: np.ndarray) -> Tuple[float, float, fl
     xc, yc, radius = result.x
     return xc, yc, radius
 
-# Define a function to cluster circle points
 def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str, is_real: bool = False, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     points = np.column_stack((x, y))
 
@@ -69,13 +66,15 @@ def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str, is_real:
         return circle_points, labels == main_label
     return np.array([]), np.zeros_like(labels, dtype=bool)
 
-# Define a function to detect circles and save plots
-def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
+def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False, distance_threshold: float = 100.0) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
     circle_points_dict: Dict[str, np.ndarray] = {}
     algorithms = list(clustering_params.keys())
     
     for alg in algorithms:
-        points, mask = cluster_circle_points(x, y, algorithm=alg, is_real=is_real, **clustering_params.get(alg, {}))
+        params = clustering_params.get(alg, {})
+        if not isinstance(params, dict):
+            params = {}  # Ensure params is a dictionary
+        points, mask = cluster_circle_points(x, y, algorithm=alg, is_real=is_real, **params)
         circle_points_dict[alg] = points
 
         plt.figure(figsize=(10, 8))
@@ -92,6 +91,26 @@ def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dic
 
     if len(common_points) > 0:
         xc, yc, radius = fit_circle_to_points(common_points[:, 0], common_points[:, 1])
-        return xc, yc, radius, common_mask
+
+        # Points detected by one or more algorithms but not all
+        any_mask = all_masks.any(axis=1)
+        partial_mask = any_mask & ~common_mask
+        
+        # Mark points within the distance threshold of common points
+        all_detections_mask = mark_nearby_partial_points(x, y, common_mask, partial_mask, distance_threshold)
+        return xc, yc, radius, all_detections_mask
     else:
         return None, None, None, common_mask
+
+def mark_nearby_partial_points(x: np.ndarray, y: np.ndarray, common_mask: np.ndarray, partial_mask: np.ndarray, distance_threshold: float) -> np.ndarray:
+    all_detections_mask = np.copy(common_mask)
+    
+    common_points = np.column_stack((x, y))[common_mask]
+    partial_points = np.column_stack((x, y))[partial_mask]
+
+    for pp in partial_points:
+        distances = np.sqrt((common_points[:, 0] - pp[0]) ** 2 + (common_points[:, 1] - pp[1]) ** 2)
+        if np.any(distances <= distance_threshold):
+            all_detections_mask[np.where((x == pp[0]) & (y == pp[1]))[0][0]] = True
+
+    return all_detections_mask
