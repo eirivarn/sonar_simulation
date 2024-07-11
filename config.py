@@ -6,12 +6,13 @@ class Config:
         self.pipe_center: Tuple[int, int] = (90, 500)
         self.pipe_radius: int = 30
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
-        self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor.obj', '/Users/eirikvarnes/code/blender/pipeline.obj']
-        self.show_plots: bool = False
+        self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
+        self.show_plots: bool = True
+        self.get_ground_truth: bool = True
         
         self.sonar: Dict[str, Any] = {
-            "max_range": 2000,
-            "angle_width": 60,
+            "max_range": 5000,
+            "angle_width": 30,
             "num_rays": 120,
             "sonar_positions": [(50, 20), (30, 40)],
             "angles": [90, 45],
@@ -31,7 +32,7 @@ class Config:
                 "max_trials": 1000
             },
             "dbscan": {
-                "eps": 20,
+                "eps": 16,
                 "min_samples": 1,
             },
         }
@@ -56,16 +57,16 @@ class Config:
         self.mesh_processing: Dict[str, Any] = {
             "slice_axis": 'x',
             "slice_axes": ['x', 'y', 'z'],
-            "padding_factor": 3,
-            "grid_size": (300, 300),
-            "slice_positions": list(range(-50, 50, 1)),
+            "padding_factor": 5,
+            "grid_size": (500, 500),
+            "slice_positions": list(range(-49, 50, 1)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
             "num_bins": 500,
             "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 35.0
+            "circle_point_margin": 40.0
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,
