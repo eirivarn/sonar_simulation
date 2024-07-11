@@ -66,7 +66,7 @@ def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str, is_real:
         return circle_points, labels == main_label
     return np.array([]), np.zeros_like(labels, dtype=bool)
 
-def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False, distance_threshold: float = 100.0) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
+def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False, distance_threshold: float = 50.0) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
     circle_points_dict: Dict[str, np.ndarray] = {}
     algorithms = list(clustering_params.keys())
     

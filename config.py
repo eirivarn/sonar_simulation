@@ -7,13 +7,13 @@ class Config:
         self.pipe_radius: int = 30
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
-        self.show_plots: bool = True
+        self.show_plots: bool = False
         self.get_ground_truth: bool = True
         
         self.sonar: Dict[str, Any] = {
             "max_range": 5000,
-            "angle_width": 30,
-            "num_rays": 120,
+            "angle_width": 20,
+            "num_rays": 60,
             "sonar_positions": [(50, 20), (30, 40)],
             "angles": [90, 45],
         }
@@ -28,11 +28,11 @@ class Config:
             # ransac and dbscan are stricter clustering methods, less point, more certainty  
             "ransac": {
                 "min_samples": 1,
-                "residual_threshold": 150,
+                "residual_threshold": 90,
                 "max_trials": 1000
             },
             "dbscan": {
-                "eps": 16,
+                "eps": 10,
                 "min_samples": 1,
             },
         }
@@ -58,15 +58,15 @@ class Config:
             "slice_axis": 'x',
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 5,
-            "grid_size": (500, 500),
-            "slice_positions": list(range(-49, 50, 1)),
+            "grid_size": (700, 700),
+            "slice_positions": list(range(-90, 90, 1)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
             "num_bins": 500,
             "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 40.0
+            "circle_point_margin": 15.0
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,

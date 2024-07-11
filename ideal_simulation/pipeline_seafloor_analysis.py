@@ -108,6 +108,12 @@ def reduce_resolution_fast(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np
     
     return np.array(reduced_x), np.array(reduced_y)
 
+def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percentage: float, angle_degrees: float, relative_distance_to_ocean_floor: float) -> None:
+    print(f"{prefix}: Enclosed Area: {enclosed_area}")
+    print(f"{prefix}: Percentage Enclosed: {enclosed_percentage}%")
+    print(f"{prefix}: Angle of seafloor under pipe: {angle_degrees} degrees")
+    print(f"{prefix}: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
+
 def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real: bool = False) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float]]:
     images_folder = "images/real"
     os.makedirs(images_folder, exist_ok=True)
@@ -167,11 +173,6 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
     print('GROUND TRUTH: No unique values found in the label map.')
     return None
 
-def print_assessment_results(prefix: str, enclosed_area: float, enclosed_percentage: float, angle_degrees: float, relative_distance_to_ocean_floor: float) -> None:
-    print(f"{prefix}: Enclosed Area: {enclosed_area}")
-    print(f"{prefix}: Percentage Enclosed: {enclosed_percentage}%")
-    print(f"{prefix}: Angle of seafloor under pipe: {angle_degrees} degrees")
-    print(f"{prefix}: Relative distance to the size of the circle: {relative_distance_to_ocean_floor}")
 
 def run_pipeline_seafloor_detection(slice_position: int, 
                                     sonar_positions: List[Tuple[int, int]], 
