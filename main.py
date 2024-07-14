@@ -24,21 +24,21 @@ def main():
     # run_ideal_mesh_sonar_scan_simulation(sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation with Clustering ************
-    # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True)
+    run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True)
     
     # ************ Run Detection Evaluation ************
-    results = run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)
+    # results = run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)
     
-    signal_results = [r[:10] for r in results if r is not None and len(r) >= 10]
-    ground_truth_results = [r[10] for r in results if r is not None and len(r) > 10]
+    # signal_results = [r[:10] for r in results if r is not None and len(r) >= 10]
+    # ground_truth_results = [r[10] for r in results if r is not None and len(r) > 10]
     
-    if results:
-        signal_filename = format_filename('signal_results', sonar_positions_1, angles)
-        save_results_to_csv(signal_filename, 'signal', signal_results)
+    # if results:
+    #     signal_filename = format_filename('signal_results', sonar_positions_1, angles)
+    #     save_results_to_csv(signal_filename, 'signal', signal_results)
         
-        save_results_to_csv('data/ground_truth_results.csv', 'ground_truth', ground_truth_results)
-    else:
-        print("No results to save.")
+    #     save_results_to_csv('data/ground_truth_results.csv', 'ground_truth', ground_truth_results)
+    # else:
+    #     print("No results to save.")
         
     # ************ Compare Results ************
     # compare_files('data/ground_truth_results.csv', 'data/signal_results_s1_1000_2000_a1_130.csv')
