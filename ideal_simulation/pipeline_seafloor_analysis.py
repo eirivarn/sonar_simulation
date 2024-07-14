@@ -20,23 +20,44 @@ def print_status_and_stability(prefix: str, free_span_status: str, stability_per
     print(f"{prefix}: Free-span Status: {free_span_status}")
     print(f"{prefix}: Stability Percentage: {stability_percentage}%")
 
-def extract_curve_and_circle_points(label_map: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    circle_points = np.where(label_map == 2)
-    curve_points = np.where(label_map == 1)
+def extract_curve_and_circle_points(label_map: Tuple[list, np.ndarray], map_type: str):
+    if map_type == 'ground_truth':
+        circle_points = np.where(label_map == 2)
+        curve_points = np.where(label_map == 1)
 
-    if circle_points[0].size == 0 or curve_points[0].size == 0:
-        print('No points found in the ground truth.')
-        return np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
+        if circle_points[0].size == 0 or curve_points[0].size == 0:
+            print('No points found in the ground truth.')
+            return np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
 
-    circle_x = circle_points[1]
-    circle_y = circle_points[0]
-    curve_x = curve_points[1]
-    curve_y = curve_points[0]
-    common_mask = np.zeros_like(label_map, dtype=bool)
-    common_mask[circle_points] = True
-    common_mask[curve_points] = True
+        circle_x = circle_points[1]
+        circle_y = circle_points[0]
+        curve_x = curve_points[1]
+        curve_y = curve_points[0]
+    else: 
+        circle_x = []
+        circle_y = []
+        curve_x = []
+        curve_y = []
+        for point in label_map:
+            try:
+                x, y, label = point  
+                if label == 2:
+                    circle_x.append(x)
+                    circle_y.append(y)
+                elif label == 1:
+                    curve_x.append(x)
+                    curve_y.append(y)
+            except TypeError as e:
+                print(f"Error processing point {point}: {e}")
 
-    return circle_x, circle_y, curve_x, curve_y, common_mask
+    # Convert lists to numpy arrays for better performance in further processing
+    circle_x = np.array(circle_x)
+    circle_y = np.array(circle_y)
+    curve_x = np.array(curve_x)
+    curve_y = np.array(curve_y)
+
+    return circle_x, circle_y, curve_x, curve_y
+
 
 def reduce_resolution_fast(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     num_bins = config.get('interpolation', 'num_bins')
@@ -125,7 +146,7 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
         print('GROUND TRUTH: No unique values found in the label map.')
         return None
 
-    circle_x, circle_y, curve_x, curve_y, common_mask = extract_curve_and_circle_points(label_map)
+    circle_x, circle_y, curve_x, curve_y = extract_curve_and_circle_points(label_map, 'ground_truth')
     if circle_x.size == 0 or curve_x.size == 0:
         return None
 
@@ -190,11 +211,8 @@ def run_pipeline_seafloor_detection(slice_position: int,
             print("SIGNAL: No common points found among all clustering algorithms.")
             return None
     else: 
-        circle_x, circle_y, curve_x, curve_y, common_mask = extract_curve_and_circle_points(label_map)
-        x_circle = np.mean(circle_x)
-        y_circle = np.mean(circle_y)
-        radius = np.sqrt((circle_x - x_circle) ** 2 + (circle_y - y_circle) ** 2).mean()
-
+        circle_x, circle_y, _, _ = extract_curve_and_circle_points(signal_map, 'signal')
+        x_circle, y_circle, radius, common_mask = detect_circle(circle_x, circle_y, clustering_params, is_real=True)
 
     # Apply the translation to all points
     translation_x, translation_y = -x_circle, -y_circle
@@ -221,7 +239,7 @@ def run_pipeline_seafloor_detection(slice_position: int,
     free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
     print_status_and_stability("SIGNAL", free_span_status, stability_percentage)
 
-    plot_and_save_intersections(x_translated, y_translated, common_mask, curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
+    plot_and_save_intersections(x_translated, y_translated, common_mask[:x_translated.size], curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
      
     if get_ground_truth:
         ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
