@@ -24,7 +24,7 @@ def main():
     # run_ideal_mesh_sonar_scan_simulation(sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation with Clustering ************
-    run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True)
+    run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=True, use_clustering=False)
     
     # ************ Run Detection Evaluation ************
     # results = run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)

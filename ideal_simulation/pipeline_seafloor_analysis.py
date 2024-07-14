@@ -189,7 +189,7 @@ def run_pipeline_seafloor_detection(slice_position: int,
                                     sonar_positions: List[Tuple[int, int]], 
                                     angles: List[int], 
                                     get_ground_truth: bool = False,
-                                    use_clustering: bool = False
+                                    use_clustering: bool = True
                                     ) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
     
     clustering_params = config.clustering_params
@@ -210,8 +210,6 @@ def run_pipeline_seafloor_detection(slice_position: int,
         if x_circle is None or y_circle is None or radius is None:
             print("SIGNAL: No common points found among all clustering algorithms.")
             return None
-        plot_and_save_points(x_translated, y_translated, common_mask, 'Common Circle Points', images_folder)
-        plot_and_save_all_points_with_circle(x_translated, y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
 
     else: 
         circle_x, circle_y, _, _ = extract_curve_and_circle_points(signal_map, 'signal')
@@ -220,9 +218,16 @@ def run_pipeline_seafloor_detection(slice_position: int,
     # Apply the translation to all points
     translation_x, translation_y = -x_circle, -y_circle
     x_translated, y_translated = x + translation_x, y + translation_y
-    circle_x_translated, circle_y_translated = circle_x + translation_x, circle_y + translation_y
     x_circle_translated, y_circle_translated = x_circle + translation_x, y_circle + translation_y
+    if not use_clustering:
+        circle_x_translated, circle_y_translated = circle_x + translation_x, circle_y + translation_y
+        plot_and_save_all_points_with_circle(circle_x_translated, circle_y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
+
+    if use_clustering:
+        plot_and_save_points(x_translated, y_translated, common_mask, 'Common Circle Points', images_folder)
+        plot_and_save_all_points_with_circle(x_translated, y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
     
+        
     print(f"SIGNAL: Fitted Circle: Center = ({x_circle_translated}, {y_circle_translated}), Radius = {radius}")
 
     
@@ -241,7 +246,10 @@ def run_pipeline_seafloor_detection(slice_position: int,
     free_span_status, stability_percentage = assess_pipe_condition(angle_degrees, enclosed_area, relative_distance_to_ocean_floor, radius)
     print_status_and_stability("SIGNAL", free_span_status, stability_percentage)
 
-    plot_and_save_intersections(circle_x_translated, circle_y_translated, common_mask[:x_translated.size], curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
+    if use_clustering:
+        plot_and_save_intersections(x_translated, y_translated, common_mask[:x_translated.size], curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
+    else:   
+        plot_and_save_intersections(circle_x_translated, circle_y_translated, common_mask[:x_translated.size], curve_x, curve_y, x_circle_translated, y_circle_translated, radius, enclosed_polygon, images_folder)
      
     if get_ground_truth:
         ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
