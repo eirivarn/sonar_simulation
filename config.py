@@ -19,13 +19,6 @@ class Config:
         }
         
         self.clustering_params: Dict[str, Dict[str, Any]] = {
-            # "kmeans": {
-            #     "n_clusters": 3
-            # },
-            # "agglomerative": {
-            #     "n_clusters": 3
-            # },
-            # ransac and dbscan are stricter clustering methods, less point, more certainty  
             "ransac": {
                 "min_samples": 1,
                 "residual_threshold": 90,
@@ -59,14 +52,15 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 5,
             "grid_size": (700, 700),
-            "slice_positions": list(range(-90, 90, 1)),
+            "slice_positions": list(range(-90, 90, 100)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
             "num_bins": 500,
             "smoothing_factor": 20.0,
             "curve_outlier_threshold": 10.0,
-            "circle_point_margin": 15.0
+            "circle_point_margin": 15.0,
+            "buffer_distance": 5.0  
         }
         self.ray_cast: Dict[str, Any] = {
             "strong_signal": 2,

@@ -11,6 +11,14 @@ from ideal_simulation.seafloor_detection import (
     plot_and_save_points,
     plot_and_save_intersections
 )
+from shapely.geometry import LineString, Point
+
+def extract_points_near_curve(x: np.ndarray, y: np.ndarray, curve_x: np.ndarray, curve_y: np.ndarray, buffer_distance: float) -> Tuple[np.ndarray, np.ndarray]:
+    """Create a buffer around the curve and extract points that fall within this buffer."""
+    curve_line = LineString(zip(curve_x, curve_y))
+    curve_buffer = curve_line.buffer(buffer_distance)
+    mask = np.array([curve_buffer.contains(Point(px, py)) for px, py in zip(x, y)])
+    return x[mask], y[mask]
 
 def print_assessment_results(prefix: str, results: Dict[str, float]) -> None:
     for key, value in results.items():
@@ -163,8 +171,6 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
     curve_x_translated, curve_y_translated = curve_x + translation_x, curve_y + translation_y
     x_circle_translated, y_circle_translated = x_circle + translation_x, y_circle + translation_y
 
-    print(f"GROUND TRUTH: Fitted Circle: Center = ({x_circle_translated}, {y_circle_translated}), Radius = {radius}")
-
     plot_and_save_all_points_with_circle(circle_x_translated, circle_y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
     curve_x_translated, curve_y_translated = plot_curve_and_circle(curve_x_translated, curve_y_translated, x_circle_translated, y_circle_translated, radius, images_folder)
 
@@ -191,8 +197,8 @@ def run_pipeline_seafloor_detection(slice_position: int,
                                     get_ground_truth: bool = False,
                                     use_clustering: bool = True
                                     ) -> Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, Union[None, Tuple[float, float, float, np.ndarray, np.ndarray]]]]:
-    
     clustering_params = config.clustering_params
+    buffer_distance = buffer_distance = config.get('interpolation', 'buffer_distance')
 
     images_folder = "images/signal"
     os.makedirs(images_folder, exist_ok=True)
@@ -211,7 +217,7 @@ def run_pipeline_seafloor_detection(slice_position: int,
             print("SIGNAL: No common points found among all clustering algorithms.")
             return None
 
-    else: 
+    else:
         circle_x, circle_y, _, _ = extract_curve_and_circle_points(signal_map, 'signal')
         x_circle, y_circle, radius, common_mask = detect_circle(circle_x, circle_y, clustering_params, is_real=True)
 
@@ -219,19 +225,16 @@ def run_pipeline_seafloor_detection(slice_position: int,
     translation_x, translation_y = -x_circle, -y_circle
     x_translated, y_translated = x + translation_x, y + translation_y
     x_circle_translated, y_circle_translated = x_circle + translation_x, y_circle + translation_y
+
+    # Plotting all points with the circle
     if not use_clustering:
         circle_x_translated, circle_y_translated = circle_x + translation_x, circle_y + translation_y
         plot_and_save_all_points_with_circle(circle_x_translated, circle_y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
 
-    if use_clustering:
-        plot_and_save_points(x_translated, y_translated, common_mask, 'Common Circle Points', images_folder)
-        plot_and_save_all_points_with_circle(x_translated, y_translated, common_mask, x_circle_translated, y_circle_translated, radius, images_folder)
-    
-        
-    print(f"SIGNAL: Fitted Circle: Center = ({x_circle_translated}, {y_circle_translated}), Radius = {radius}")
-
-    
     curve_x, curve_y = plot_curve_and_circle(x_translated, y_translated, x_circle_translated, y_circle_translated, radius, images_folder)
+
+    # Extract points near the curve
+    x_near_curve, y_near_curve = extract_points_near_curve(x_translated, y_translated, curve_x, curve_y, buffer_distance)
 
     enclosed_area, enclosed_percentage, enclosed_polygon, relative_distance_to_ocean_floor, angle_degrees = calculate_enclosed_area(curve_x, curve_y, x_circle_translated, y_circle_translated, radius)
     
@@ -253,6 +256,6 @@ def run_pipeline_seafloor_detection(slice_position: int,
      
     if get_ground_truth:
         ground_truth_params = extract_ground_truth(label_map, clustering_params, is_real=True)
-        return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees, ground_truth_params
+        return x_circle_translated, y_circle_translated, radius, x_near_curve, y_near_curve, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees, ground_truth_params
 
-    return x_circle_translated, y_circle_translated, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees
+    return x_circle_translated, y_circle_translated, radius, x_near_curve, y_near_curve, free_span_status, stability_percentage, enclosed_percentage, relative_distance_to_ocean_floor, angle_degrees
