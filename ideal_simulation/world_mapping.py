@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ideal_simulation.pipeline_seafloor_analysis import *
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
+from tqdm import tqdm
 
 def draw_circle(ax, x_circle, y_circle, z, radius, stability_percentage):
     # Generate points for the circle
@@ -14,7 +15,7 @@ def draw_circle(ax, x_circle, y_circle, z, radius, stability_percentage):
 
 def run_3d_seafloor_analysis(sonar_positions: List[Tuple[int, int]], angles: List[int], slice_positions: List[int]) -> List[Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, float, float, float]]]:
     results = []
-    for slice_position in slice_positions:
+    for slice_position in tqdm(slice_positions, desc="Processing slices"):
         result = run_pipeline_seafloor_detection(slice_position, sonar_positions, angles, get_ground_truth=config.get_ground_truth)
         results.append(result)
     return results

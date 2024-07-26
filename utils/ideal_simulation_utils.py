@@ -54,14 +54,14 @@ def save_initial_results_to_csv(filename: str, data: List[Union[None, Tuple[floa
     else:
         print(f"No data to save for {filename}")
 
-def save_ground_truth_results_to_csv(filename: str, data: List[Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, str, float, float, float, float]]]) -> None:
+def save_ground_truth_results_to_csv(filename: str, data: List[Union[None, Tuple[str, float, float, float, float]]]) -> None:
     rows = []
     for result in data:
         if result is None:
             continue
         
         # Unpack data
-        free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result[5:]
+        x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
         
         data_dict = {
             'free_span_status': free_span_status,
@@ -128,7 +128,7 @@ def run_detection_evaluation(sonar_positions_1, angles, slice_positions):
     results = run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)
     
     signal_results = [r[:10] for r in results if r is not None and len(r) >= 10]
-    ground_truth_results = [r[:10] for r in results if r is not None and len(r) >= 10]
+    ground_truth_results = [r[10] for r in results if r is not None and len(r) > 10]
     
     if results:
         signal_filename = format_filename('signal_results', sonar_positions_1, angles)

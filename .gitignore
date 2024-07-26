@@ -116,3 +116,5 @@ public/uploads
 #images
 *.png
 *.csv
+
+/AutogluonModels
