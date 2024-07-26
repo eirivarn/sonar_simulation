@@ -52,29 +52,37 @@ def train_with_autogluon(train_data):
     return predictor
 
 # Main function to run the process
-def main(signal_csv_path, gt_csv_path):
-    # Load and preprocess data
-    signal_df, gt_df = load_data(signal_csv_path, gt_csv_path)
-    stability_diff = calculate_differences(signal_df, gt_df)
-    X, y = prepare_data_for_modeling(signal_df, stability_diff)
+def main(signal_csv_paths, gt_csv_path):
+    combined_df = pd.DataFrame()
+    
+    # Load, calculate differences, and combine data
+    for signal_path in signal_csv_paths:
+        signal_df, gt_df = load_data(signal_path, gt_csv_path)
+        stability_diff = calculate_differences(signal_df, gt_df)
+        signal_df['stability_diff'] = stability_diff
+        combined_df = pd.concat([combined_df, signal_df], ignore_index=True)
+    
+    # Prepare and clean data
+    X, y = prepare_data_for_modeling(combined_df, combined_df['stability_diff'])
     X_clean, y_clean = remove_outliers(X, y)
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.95, random_state=42)
     
-    # Train the model
+    # Create training and test datasets for AutoGluon
     train_data = pd.concat([X_train, y_train], axis=1)
     train_data.columns = [f'label_{i}' for i in range(10)] + ['stability_diff']
     train_data = TabularDataset(train_data)
-    predictor = train_with_autogluon(train_data)
     
-    print("AutoGluon model training complete.")
-    
-    # Evaluate on the test set
     test_data = pd.concat([X_test, y_test], axis=1)
     test_data.columns = [f'label_{i}' for i in range(10)] + ['stability_diff']
     test_data = TabularDataset(test_data)
 
+    # Train the model
+    predictor = train_with_autogluon(train_data)
+    
+    print("AutoGluon model training complete.")
+    
     # Make predictions on the test set
     test_predictions = predictor.predict(test_data)
     test_true = y_test
@@ -83,7 +91,7 @@ def main(signal_csv_path, gt_csv_path):
     rmse = np.sqrt(mean_squared_error(test_true, test_predictions))
     print(f"Test RMSE: {rmse}")
 
-    # Evaluate on the training set
+    # Make predictions on the training set
     train_predictions = predictor.predict(train_data)
     train_true = y_train
 
@@ -96,8 +104,13 @@ def main(signal_csv_path, gt_csv_path):
     print(leaderboard)
 
 # Specify the paths to your CSV files
-signal_csv_path = 'data/signal_results_s1_1000_2000_a1_130_with_labeling.csv'
+signal_csv_paths = [
+    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv',
+    'data/signal_results_s1_1000_2000_a1_130_with_labeling.csv',
+    'data/signal_results_s1_1000_3500_a1_220_with_labeling.csv',
+    'data/signal_results_s1_1500_2870_a1_180_with_labeling.csv'
+]
 gt_csv_path = 'data/ground_truth_results.csv'
 
 if __name__ == "__main__":
-    main(signal_csv_path, gt_csv_path)
+    main(signal_csv_paths, gt_csv_path)

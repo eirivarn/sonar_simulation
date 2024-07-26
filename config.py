@@ -7,13 +7,13 @@ class Config:
         self.pipe_radius: int = 30
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
-        self.show_plots: bool = True
-        self.get_ground_truth: bool = True
+        self.show_plots: bool = False
+        self.get_ground_truth: bool = False
         
         self.sonar: Dict[str, Any] = {
             "max_range": 5000,
-            "angle_width": 20,
-            "num_rays": 60,
+            "angle_width": 45,
+            "num_rays": 90,
             "sonar_positions": [(50, 20), (30, 40)],
             "angles": [90, 45],
         }
