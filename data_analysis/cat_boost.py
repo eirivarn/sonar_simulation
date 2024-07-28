@@ -3,6 +3,7 @@ import numpy as np
 from catboost import CatBoostRegressor, Pool
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
 # Function to load data
 def load_data(signal_path, gt_path):
@@ -18,9 +19,10 @@ def calculate_differences(signal_df, gt_df):
 # Function to prepare data for modeling
 def prepare_data_for_modeling(signal_df, differences):
     signal_df['stability_diff'] = differences
-    label_columns = [f'label_{i}' for i in range(10)]
+    label_columns = [f'label_{i}' for i in range(-11, 12)]  # Adjust label range to -11 to 11
     X = signal_df[label_columns]
     y = signal_df['stability_diff']
+    X.fillna(0, inplace=True)  # Filling missing values with 0, in case some labels are not present
     return X, y
 
 # Function to train CatBoost model
@@ -35,6 +37,21 @@ def train_catboost_model(X_train, y_train):
     train_pool = Pool(X_train, y_train)
     model.fit(train_pool)
     return model
+
+# Function to plot feature importances
+def plot_feature_importances(importances, features):
+    plt.figure(figsize=(12, 8))
+    plt.title("Feature Importances by CatBoost Model")
+    # Plot in the order of features as they appear
+    sorted_features = sorted(zip(features, importances), key=lambda x: int(x[0].split('_')[1]))
+    features_sorted, importances_sorted = zip(*sorted_features)
+    plt.bar(features_sorted, importances_sorted, color="b", align="center")
+    plt.xticks(rotation=90)
+    plt.ylabel("Importance")
+    plt.xlabel("Features")
+    plt.tight_layout()  # Adjust layout to make room for label rotation
+    plt.show()
+
 
 # Main function to run the process
 def main(signal_csv_paths, gt_csv_path):
@@ -51,7 +68,7 @@ def main(signal_csv_paths, gt_csv_path):
     X, y = prepare_data_for_modeling(combined_df, combined_df['stability_diff'])
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     # Train the CatBoost model
     model = train_catboost_model(X_train, y_train)
@@ -66,17 +83,15 @@ def main(signal_csv_paths, gt_csv_path):
     train_rmse = np.sqrt(mean_squared_error(y_train, train_predictions))
     print(f"Train RMSE: {train_rmse}")
     
-    # Print feature importances
+    # Print and plot feature importances
     feature_importances = model.get_feature_importance()
     for i, col in enumerate(X_train.columns):
         print(f"Feature: {col}, Importance: {feature_importances[i]}")
+    plot_feature_importances(feature_importances, X_train.columns)
 
 # Specify the paths to your CSV files
 signal_csv_paths = [
-    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv',
-    'data/signal_results_s1_1000_2000_a1_130_with_labeling.csv',
-    'data/signal_results_s1_1000_3500_a1_220_with_labeling.csv',
-    'data/signal_results_s1_1500_2870_a1_180_with_labeling.csv'
+    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv'
 ]
 gt_csv_path = 'data/ground_truth_results.csv'
 

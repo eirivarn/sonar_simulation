@@ -8,41 +8,37 @@ import matplotlib.pyplot as plt
 def format_filename(base_name: str, sonar_positions: List[Tuple[int, int]], angles: List[int]) -> str:
     pos_str = "_".join([f"s{i+1}_{y}_{x}" for i, (y, x) in enumerate(sonar_positions)])
     angle_str = "_".join([f"a{i+1}_{angle}" for i, angle in enumerate(angles)])
-    os.makedirs('data', exist_ok=True)  # Ensure the 'data' directory exists
+    os.makedirs('data', exist_ok=True)
     return os.path.join('data', f"{base_name}_{pos_str}_{angle_str}.csv")
 
-def calculate_x_distances_and_labels(x_circle, curve_x, num_labels=21):  # Using 21 to include -10 to 10
+def calculate_x_distances_and_labels(x_circle, curve_x, radius):
     labels = []
-    max_distance = max(curve_x) - min(curve_x)
-    step = max_distance / (num_labels - 1)
-    left_boundary = x_circle - 10 * step
-    right_boundary = x_circle + 10 * step
-
+    label_range = np.linspace(x_circle - 10 * radius, x_circle + 10 * radius, num=21)  # 21 points for labels from -10 to 10
+    
     for x in curve_x:
-        if x < left_boundary:
-            label = -10
-        elif x > right_boundary:
-            label = 10
+        if x < x_circle - 10 * radius:
+            label = -11  # More than 10 units to the left
+        elif x > x_circle + 10 * radius:
+            label = 11  # More than 10 units to the right
         else:
-            label = int(round((x - x_circle) / step))
+            # Calculate the theoretical label index
+            label_index = np.searchsorted(label_range, x, side='right') - 1
+            label = label_index - 10  # Convert index to range from -10 to 10
         labels.append(label)
-
     return labels
-
 
 def save_initial_results_to_csv(filename: str, data: List[Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, str, float, float, float, float]]]) -> None:
     rows = []
     for result in data:
         if result is None:
             continue
-        # Unpack data
         x_circle, y_circle, radius, curve_x, curve_y, free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
         data_dict = {
             'x_circle': x_circle,
             'y_circle': y_circle,
             'radius': radius,
-            'curve_x': list(curve_x),  # Convert numpy arrays to lists
-            'curve_y': list(curve_y),  # Convert numpy arrays to lists
+            'curve_x': list(curve_x),
+            'curve_y': list(curve_y),
             'free_span_status': free_span_status,
             'stability_percentage': stability_percentage,
             'enclosed_percentage': enclosed_percentage,
@@ -50,7 +46,7 @@ def save_initial_results_to_csv(filename: str, data: List[Union[None, Tuple[floa
             'angle_degrees': angle_degrees
         }
         rows.append(data_dict)
-    if rows:  # Only save if there is data
+    if rows:
         df = pd.DataFrame(rows)
         df.to_csv(filename, index=False)
     else:
@@ -61,7 +57,6 @@ def save_ground_truth_results_to_csv(filename: str, data: List[Union[None, Tuple
     for result in data:
         if result is None:
             continue
-        # Unpack data
         free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
         data_dict = {
             'free_span_status': free_span_status,
@@ -71,7 +66,7 @@ def save_ground_truth_results_to_csv(filename: str, data: List[Union[None, Tuple
             'angle_degrees': angle_degrees
         }
         rows.append(data_dict)
-    if rows:  # Only save if there is data
+    if rows:
         df = pd.DataFrame(rows)
         df.to_csv(filename, index=False)
     else:
@@ -82,10 +77,12 @@ def label_and_save_results(input_filename: str, output_filename: str):
     labeled_rows = []
     for i, row in df.iterrows():
         x_circle = row['x_circle']
+        radius = row['radius']
         curve_x = eval(row['curve_x'])
         curve_y = eval(row['curve_y'])
-        labels = calculate_x_distances_and_labels(x_circle, curve_x)
-        label_counts = {label: 0 for label in range(-10, 11)}
+        labels = calculate_x_distances_and_labels(x_circle, curve_x, radius)
+        # Initialize the dictionary to include all possible labels and extra labels for distant points
+        label_counts = {label: 0 for label in range(-11, 12)}  # From -11 to 11
         for label in labels:
             label_counts[label] += 1
         row_data = row.to_dict()
@@ -108,6 +105,7 @@ def label_and_save_results(input_filename: str, output_filename: str):
         labeled_df.to_csv(output_filename, index=False)
     else:
         print(f"No data to save for {output_filename}")
+
 
 def run_detection_evaluation(sonar_positions_1, angles, slice_positions):
     results = run_3d_mapping_simulation(sonar_positions_1, angles, slice_positions)

@@ -67,7 +67,7 @@ def main(signal_csv_paths, gt_csv_path):
     X_clean, y_clean = remove_outliers(X, y)
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.95, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
     
     # Create training and test datasets for AutoGluon
     train_data = pd.concat([X_train, y_train], axis=1)
@@ -105,10 +105,7 @@ def main(signal_csv_paths, gt_csv_path):
 
 # Specify the paths to your CSV files
 signal_csv_paths = [
-    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv',
-    'data/signal_results_s1_1000_2000_a1_130_with_labeling.csv',
-    'data/signal_results_s1_1000_3500_a1_220_with_labeling.csv',
-    'data/signal_results_s1_1500_2870_a1_180_with_labeling.csv'
+    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv'
 ]
 gt_csv_path = 'data/ground_truth_results.csv'
 

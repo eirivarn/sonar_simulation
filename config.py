@@ -52,7 +52,7 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 5,
             "grid_size": (700, 700),
-            "slice_positions": list(range(-90, 90, 100)),
+            "slice_positions": list(range(-90, 90, 1)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
