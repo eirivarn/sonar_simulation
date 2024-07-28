@@ -51,7 +51,7 @@ def main(signal_csv_paths, gt_csv_path):
     X, y = prepare_data_for_modeling(combined_df, combined_df['stability_diff'])
     
     # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.8, random_state=42)
     
     # Train the CatBoost model
     model = train_catboost_model(X_train, y_train)

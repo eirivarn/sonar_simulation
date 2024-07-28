@@ -27,7 +27,7 @@ def main():
     # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)
     
     # ************ Run Detection Evaluation ************
-    # run_detection_evaluation(sonar_positions_1, angles, slice_positions)
+    run_detection_evaluation(sonar_positions_1, angles, slice_positions)
 
     
 if __name__ == "__main__":
