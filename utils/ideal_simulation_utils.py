@@ -4,6 +4,7 @@ import os
 from typing import List, Tuple, Union
 from ideal_simulation.world_mapping import run_3d_mapping_simulation
 import matplotlib.pyplot as plt
+from config import config
 
 def format_filename(base_name: str, sonar_positions: List[Tuple[int, int]], angles: List[int]) -> str:
     pos_str = "_".join([f"s{i+1}_{y}_{x}" for i, (y, x) in enumerate(sonar_positions)])
@@ -57,7 +58,7 @@ def save_ground_truth_results_to_csv(filename: str, data: List[Union[None, Tuple
     for result in data:
         if result is None:
             continue
-        free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
+        x_circle_translated, y_circle_translated, radius, curve_x_translated, curve_y_translated, free_span_status, stability_percentage, enclosed_percentage, relative_distance, angle_degrees = result
         data_dict = {
             'free_span_status': free_span_status,
             'stability_percentage': stability_percentage,
@@ -112,10 +113,17 @@ def run_detection_evaluation(sonar_positions_1, angles, slice_positions):
     signal_results = [r[:10] for r in results if r is not None and len(r) >= 10]
     ground_truth_results = [r[10] for r in results if r is not None and len(r) > 10]
     if results:
-        signal_filename = format_filename('signal_results', sonar_positions_1, angles)
+        if config.load_data:
+            signal_filename = format_filename('signal_results', sonar_positions_1, angles)
+            ground_truth_filename = 'data/ground_truth_results.csv'
+        else: 
+            signal_filename = 'data/generated_signal_results.csv'
+            ground_truth_filename = 'data/generated_ground_truth_results.csv'
+        
         save_initial_results_to_csv(signal_filename, signal_results)
-        ground_truth_filename = 'data/ground_truth_results.csv'
         save_ground_truth_results_to_csv(ground_truth_filename, ground_truth_results)
         label_and_save_results(signal_filename, signal_filename.replace('.csv', '_with_labeling.csv'))
+        
+        
     else:
         print("No results to save.")

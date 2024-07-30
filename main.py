@@ -8,12 +8,12 @@ from config import config
 
 def main():
     # ************ Simulation Parameters ************ 
-    sonar_positions_1 =  [(1000, 2500)] # (y, x)
+    sonar_positions_1 =  [(1500, 2500)] # (y, x)
     
     slice_position = 70
     slice_positions = config.get('mesh_processing', 'slice_positions')
     
-    angles = [180]  # direction in degrees (mid-point direction pointing down)x
+    angles = [180]  # direction in degrees (mid-point direction pointing down)
 
     # ************ Run Basic Simulation ************
     # run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
@@ -22,13 +22,13 @@ def main():
     # run_ideal_multiple_sonar_simulation(sonar_positions_1, angles)
     
     # ************ Run Mesh Sonar Simulation ************
-    run_ideal_mesh_sonar_scan_simulation(slice_position, sonar_positions_1, angles)
+    # run_ideal_mesh_sonar_scan_simulation(slice_position, sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation ************
-    # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)
+    #run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)
     
     # ************ Run Detection Evaluation ************
-    #run_detection_evaluation(sonar_positions_1, angles, slice_positions)
+    run_detection_evaluation(sonar_positions_1, angles, slice_positions)
 
     
 if __name__ == "__main__":

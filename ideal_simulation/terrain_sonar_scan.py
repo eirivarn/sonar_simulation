@@ -140,12 +140,21 @@ def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: T
     return room
 
 def ground_wave_function(y: int) -> int:
-    """ Function to generate a wave-like ground using Perlin noise with higher resolution. """
-    amplitude = config.get('ground_wave', 'amplitude')
-    frequency = config.get('ground_wave', 'frequency')
-    base_level = config.get('ground_wave', 'base_level')
-    repeat = config.get('ground_wave', 'repeat')
-    return int(base_level + amplitude * pnoise1(y * frequency, repeat=repeat))
+    base_level = config.ground_wave['base_level']
+    total_wave = np.zeros_like(y, dtype=float) + base_level
+
+    for i, component in enumerate(config.ground_wave['components']):
+        amplitude = component['amplitude']
+        frequency = component['frequency']
+        if i == 0:
+            # Introduce a larger random variation to the phase shift for the lowest frequency component
+            phase_shift = component['phase_shift'] + np.random.uniform(-0.2, 0.2)
+        else:
+            # Introduce a smaller random variation to the phase shift for other components
+            phase_shift = component['phase_shift'] + np.random.uniform(-0.2, 0.2)
+        total_wave += amplitude * np.sin(frequency * y + phase_shift)
+
+    return total_wave.astype(int)
 
 def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
     if config.load_data:
