@@ -124,7 +124,7 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
     
     return cartesian_coords
 
-def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: Tuple[int, int], pipe_radius: int, ground_wave: Callable[[int], int]) -> np.ndarray:
+def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: Tuple[int, int], pipe_radius: int) -> np.ndarray:
     room = np.zeros(dimensions, dtype=int)
     y, x = np.ogrid[:dimensions[0], :dimensions[1]]
     distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
@@ -132,28 +132,22 @@ def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: T
     # Label the pipe as 1
     room[distance_from_center <= pipe_radius] = 2
     
-    # Label the ground as 2
+    # Generate the ground wave across the entire y range and apply it
+    ground_wave = ground_wave_function(np.arange(dimensions[1]))
     for y in range(dimensions[1]):
-        x = ground_wave(y)
+        x = ground_wave[y]
         if 0 <= x < dimensions[0]:
             room[x, y] = 1
     return room
 
-def ground_wave_function(y: int) -> int:
+def ground_wave_function(y: np.ndarray) -> np.ndarray:
     base_level = config.ground_wave['base_level']
     total_wave = np.zeros_like(y, dtype=float) + base_level
-
-    for i, component in enumerate(config.ground_wave['components']):
+    for component in config.ground_wave['components']:
         amplitude = component['amplitude']
         frequency = component['frequency']
-        if i == 0:
-            # Introduce a larger random variation to the phase shift for the lowest frequency component
-            phase_shift = component['phase_shift'] + np.random.uniform(-0.2, 0.2)
-        else:
-            # Introduce a smaller random variation to the phase shift for other components
-            phase_shift = component['phase_shift'] + np.random.uniform(-0.2, 0.2)
+        phase_shift = component['phase_shift'] + np.random.uniform(-3, 3)
         total_wave += amplitude * np.sin(frequency * y + phase_shift)
-
     return total_wave.astype(int)
 
 def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
@@ -205,7 +199,7 @@ def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: L
         dimensions = config.dimensions
         pipe_center = config.pipe_center
         pipe_radius = config.pipe_radius
-        label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
+        label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius)
         y_range = (0, dimensions[1])
         padded_z_range = (0, dimensions[0])
         print(f"Synthetic data generated with shape: {label_map.shape} and dimensions: {dimensions}")
