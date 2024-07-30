@@ -6,22 +6,14 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
 # Function to load data
-def load_data(signal_path, gt_path):
-    signal_df = pd.read_csv(signal_path)
-    gt_df = pd.read_csv(gt_path)
-    return signal_df, gt_df
-
-# Function to calculate differences
-def calculate_differences(signal_df, gt_df):
-    differences = abs(signal_df['stability_percentage'] - gt_df['stability_percentage'])
-    return differences
+def load_data(filepath):
+    df = pd.read_csv(filepath)
+    return df
 
 # Function to prepare data for modeling
-def prepare_data_for_modeling(signal_df, differences):
-    signal_df['stability_diff'] = differences
-    label_columns = [f'label_{i}' for i in range(-11, 12)]  # Adjust label range to -11 to 11
-    X = signal_df[label_columns]
-    y = signal_df['stability_diff']
+def prepare_data_for_modeling(df):
+    X = df.drop('abs_diff_stability', axis=1)
+    y = df['abs_diff_stability']
     X.fillna(0, inplace=True)  # Filling missing values with 0, in case some labels are not present
     return X, y
 
@@ -38,62 +30,48 @@ def train_catboost_model(X_train, y_train):
     model.fit(train_pool)
     return model
 
-# Function to plot feature importances
 def plot_feature_importances(importances, features):
     plt.figure(figsize=(12, 8))
     plt.title("Feature Importances by CatBoost Model")
-    # Plot in the order of features as they appear
-    sorted_features = sorted(zip(features, importances), key=lambda x: int(x[0].split('_')[1]))
+
+    # Define a function to handle sorting feature names that may not always have an integer suffix
+    def feature_sort_key(feature_name):
+        parts = feature_name.split('_')
+        # Attempt to convert the last part to an integer, if it fails, handle it gracefully
+        try:
+            return int(parts[-1])
+        except ValueError:
+            # Assign a default high value to ensure it sorts to the end if not numeric
+            return float('inf')
+
+    # Sorting the features by the extracted integer if present, or placing at the end if not
+    sorted_features = sorted(zip(features, importances), key=lambda x: feature_sort_key(x[0]))
     features_sorted, importances_sorted = zip(*sorted_features)
+
     plt.bar(features_sorted, importances_sorted, color="b", align="center")
     plt.xticks(rotation=90)
     plt.ylabel("Importance")
     plt.xlabel("Features")
     plt.tight_layout()  # Adjust layout to make room for label rotation
     plt.show()
-
-
+    
 # Main function to run the process
-def main(signal_csv_paths, gt_csv_path):
-    combined_df = pd.DataFrame()
-    
-    # Load, calculate differences, and combine data
-    for signal_path in signal_csv_paths:
-        signal_df, gt_df = load_data(signal_path, gt_csv_path)
-        stability_diff = calculate_differences(signal_df, gt_df)
-        signal_df['stability_diff'] = stability_diff
-        combined_df = pd.concat([combined_df, signal_df], ignore_index=True)
-    
-    # Prepare data for modeling
-    X, y = prepare_data_for_modeling(combined_df, combined_df['stability_diff'])
-    
-    # Split the data into training and test sets
+def main(filepath):
+    df = load_data(filepath)
+    X, y = prepare_data_for_modeling(df)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Train the CatBoost model
     model = train_catboost_model(X_train, y_train)
     
-    # Make predictions on the test set
+    # Evaluate the model
     test_predictions = model.predict(X_test)
     test_rmse = np.sqrt(mean_squared_error(y_test, test_predictions))
     print(f"Test RMSE: {test_rmse}")
-
-    # Make predictions on the training set
-    train_predictions = model.predict(X_train)
-    train_rmse = np.sqrt(mean_squared_error(y_train, train_predictions))
-    print(f"Train RMSE: {train_rmse}")
     
-    # Print and plot feature importances
+    # Feature Importances
     feature_importances = model.get_feature_importance()
-    for i, col in enumerate(X_train.columns):
-        print(f"Feature: {col}, Importance: {feature_importances[i]}")
-    plot_feature_importances(feature_importances, X_train.columns)
+    plot_feature_importances(feature_importances, X.columns)
 
-# Specify the paths to your CSV files
-signal_csv_paths = [
-    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv'
-]
-gt_csv_path = 'data/ground_truth_results.csv'
+processed_data_path = 'data_processed/processed_signal_data.csv'
 
 if __name__ == "__main__":
-    main(signal_csv_paths, gt_csv_path)
+    main(processed_data_path)

@@ -5,22 +5,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
 # Function to load data
-def load_data(signal_path, gt_path):
-    signal_df = pd.read_csv(signal_path)
-    gt_df = pd.read_csv(gt_path)
-    return signal_df, gt_df
-
-# Function to calculate differences
-def calculate_differences(signal_df, gt_df):
-    differences = abs(signal_df['stability_percentage'] - gt_df['stability_percentage'])
-    return differences
+def load_data(filepath):
+    df = pd.read_csv(filepath)
+    return df
 
 # Function to prepare data for modeling
-def prepare_data_for_modeling(signal_df, differences):
-    signal_df['stability_diff'] = differences
+def prepare_data_for_modeling(df):
     label_columns = [f'label_{i}' for i in range(10)]
-    X = signal_df[label_columns]
-    y = signal_df['stability_diff']
+    X = df[label_columns]
+    y = df['abs_diff_stability']
     return X, y
 
 # Function to remove outliers
@@ -41,7 +34,7 @@ def remove_outliers(X, y, z_thresh=3):
 
 # Function to train model with AutoGluon
 def train_with_autogluon(train_data):
-    predictor = TabularPredictor(label='stability_diff').fit(
+    predictor = TabularPredictor(label='abs_diff_stability').fit(
         train_data,
         hyperparameters={
             'CAT': {},
@@ -52,30 +45,28 @@ def train_with_autogluon(train_data):
     return predictor
 
 # Main function to run the process
-def main(signal_csv_paths, gt_csv_path):
-    combined_df = pd.DataFrame()
-    
-    # Load, calculate differences, and combine data
-    for signal_path in signal_csv_paths:
-        signal_df, gt_df = load_data(signal_path, gt_csv_path)
-        stability_diff = calculate_differences(signal_df, gt_df)
-        signal_df['stability_diff'] = stability_diff
-        combined_df = pd.concat([combined_df, signal_df], ignore_index=True)
+def main(filepath, random_split=True):
+    df = load_data(filepath)
     
     # Prepare and clean data
-    X, y = prepare_data_for_modeling(combined_df, combined_df['stability_diff'])
+    X, y = prepare_data_for_modeling(df)
     X_clean, y_clean = remove_outliers(X, y)
     
-    # Split the data into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.2, random_state=42)
+    # Split the data into training and test sets based on user choice
+    if random_split:
+        X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.9, random_state=42)
+    else:
+        split_index = int(len(X_clean) * 0.9)
+        X_train, X_test = X_clean[:split_index], X_clean[split_index:]
+        y_train, y_test = y_clean[:split_index], y_clean[split_index:]
     
     # Create training and test datasets for AutoGluon
     train_data = pd.concat([X_train, y_train], axis=1)
-    train_data.columns = [f'label_{i}' for i in range(10)] + ['stability_diff']
+    train_data.columns = [f'label_{i}' for i in range(10)] + ['abs_diff_stability']
     train_data = TabularDataset(train_data)
     
     test_data = pd.concat([X_test, y_test], axis=1)
-    test_data.columns = [f'label_{i}' for i in range(10)] + ['stability_diff']
+    test_data.columns = [f'label_{i}' for i in range(10)] + ['abs_diff_stability']
     test_data = TabularDataset(test_data)
 
     # Train the model
@@ -103,11 +94,8 @@ def main(signal_csv_paths, gt_csv_path):
     leaderboard = predictor.leaderboard()
     print(leaderboard)
 
-# Specify the paths to your CSV files
-signal_csv_paths = [
-    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv'
-]
-gt_csv_path = 'data/ground_truth_results.csv'
+# Specify the path to your processed CSV file
+processed_data_path = 'data_processed/processed_signal_data.csv'
 
 if __name__ == "__main__":
-    main(signal_csv_paths, gt_csv_path)
+    main(processed_data_path, random_split=False)

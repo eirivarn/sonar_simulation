@@ -5,32 +5,33 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
-def load_data(signal_path, gt_path):
-    signal_df = pd.read_csv(signal_path)
-    gt_df = pd.read_csv(gt_path)
-    return signal_df, gt_df
+def load_data(filepath):
+    df = pd.read_csv(filepath)
+    return df
 
-def calculate_differences(signal_df, gt_df):
-    differences = abs(signal_df['stability_percentage'] - gt_df['stability_percentage'])
-    return differences
-
-def prepare_data_for_analysis(signal_df, differences):
-    signal_df['stability_diff'] = differences
-    label_columns = [col for col in signal_df.columns if col.startswith('label_')]
-    X = signal_df[label_columns]
-    y = signal_df['stability_diff']
+def prepare_data_for_analysis(df):
+    # Excluding 'abs_diff_stability' to use it as the dependent variable
+    X = df.drop('abs_diff_stability', axis=1)
+    y = df['abs_diff_stability']
     return X, y
 
 def plot_target_distribution(y):
     sns.histplot(y, kde=True)
     plt.title("Target Variable Distribution")
-    plt.xlabel("Stability Difference")
+    plt.xlabel("Absolute Stability Difference")
     plt.ylabel("Frequency")
     plt.show()
 
-def random_forest_analysis(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+def random_forest_analysis(X, y, random_split=True):
+    if random_split:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    else:
+        split_index = int(len(X) * 0.95)
+        X_train, X_test = X[:split_index], X[split_index:]
+        y_train, y_test = y[:split_index], y[split_index:]
+
     rf = RandomForestRegressor(random_state=42)
     param_grid = {
         'n_estimators': [50, 100, 200],
@@ -51,35 +52,20 @@ def random_forest_analysis(X, y):
     feature_importances = best_rf.feature_importances_
     
     # Plot the feature importances, sorting by label order
-    sorted_indices = np.argsort([int(label.split('_')[1]) for label in X.columns])  # Sorting indices based on label order
     plt.figure(figsize=(10, 8))
-    plt.barh(np.array(X.columns)[sorted_indices], feature_importances[sorted_indices], color='forestgreen')
+    plt.barh(X.columns, feature_importances, color='forestgreen')
     plt.xlabel('Feature Importance')
     plt.ylabel('Feature')
     plt.title('Random Forest Feature Importances')
     plt.show()
 
+def main(filepath, random_split=True):
+    df = load_data(filepath)
+    plot_target_distribution(df['abs_diff_stability'])
+    X, y = prepare_data_for_analysis(df)
+    random_forest_analysis(X, y, random_split)
 
-def main(signal_csv_paths, gt_csv_path):
-    combined_df = pd.DataFrame()
-    for signal_path in signal_csv_paths:
-        signal_df, gt_df = load_data(signal_path, gt_csv_path)
-        stability_diff = calculate_differences(signal_df, gt_df)
-        print(f"Summary statistics for {signal_path}:")
-        print(stability_diff.describe())
-        print(f"Mean difference: {stability_diff.mean()}")
-        print(f"Median difference: {stability_diff.median()}")
-        signal_df['stability_diff'] = stability_diff
-        combined_df = pd.concat([combined_df, signal_df], ignore_index=True)
-    
-    plot_target_distribution(combined_df['stability_diff'])
-    X, y = prepare_data_for_analysis(combined_df, combined_df['stability_diff'])
-    random_forest_analysis(X, y)
-
-signal_csv_paths = [
-    'data/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv'
-]
-gt_csv_path = 'data/ground_truth_results.csv'
+processed_data_path = 'data_processed/processed_signal_data.csv'
 
 if __name__ == "__main__":
-    main(signal_csv_paths, gt_csv_path)
+    main(processed_data_path, random_split=False)

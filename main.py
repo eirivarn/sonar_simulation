@@ -8,11 +8,11 @@ from config import config
 
 def main():
     # ************ Simulation Parameters ************ 
-    sonar_positions_1 =  [(1000, 2000), (1000, 3740)] # (y, x)
+    sonar_positions_1 =  [(1000, 3500)] # (y, x)
     slice_position = 70
     slice_positions = config.get('mesh_processing', 'slice_positions')
     
-    angles = [130, 230]  # direction in degrees (mid-point direction pointing down)x
+    angles = [200]  # direction in degrees (mid-point direction pointing down)x
 
     # ************ Run Basic Simulation ************
     # run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
