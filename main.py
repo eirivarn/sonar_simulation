@@ -19,10 +19,10 @@ def main():
     # run_ideal_basic_sonar_simulation(sonar_positions_2[0], angles[0])
     
     # ************ Run Multiple Sonar Simulation ************
-    run_ideal_multiple_sonar_simulation(sonar_positions_1, angles)
+    # run_ideal_multiple_sonar_simulation(sonar_positions_1, angles)
     
     # ************ Run Mesh Sonar Simulation ************
-    # run_ideal_mesh_sonar_scan_simulation(sonar_positions_1, angles)
+    run_ideal_mesh_sonar_scan_simulation(slice_position, sonar_positions_1, angles)
     
     # ************ Run Sonar Simulation ************
     # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)

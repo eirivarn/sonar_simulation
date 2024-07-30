@@ -1,12 +1,14 @@
 import numpy as np
 import pyvista as pv
 import pandas as pd
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 from config import config
 from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor
+from noise import pnoise1
+
 
 def process_mesh(path: str, position: float, axis: str, mesh_index: int, rotation_matrix: np.ndarray, min_y: float, min_z: float) -> Tuple[pd.DataFrame, float, float, float, float]:
     try:
@@ -122,50 +124,78 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
     
     return cartesian_coords
 
+def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: Tuple[int, int], pipe_radius: int, ground_wave: Callable[[int], int]) -> np.ndarray:
+    room = np.zeros(dimensions)
+    y, x = np.ogrid[:dimensions[0], :dimensions[1]]
+    distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
+    room += np.clip(1 - (distance_from_center - pipe_radius), 0, 1)
+    for y in range(dimensions[1]):
+        x = ground_wave(y)
+        if 0 <= x < dimensions[0]:
+            room[x, y] = 1
+    return room
+
+def ground_wave_function(y: int) -> int:
+    """ Function to generate a wave-like ground using Perlin noise with higher resolution. """
+    amplitude = config.get('ground_wave', 'amplitude')
+    frequency = config.get('ground_wave', 'frequency')
+    base_level = config.get('ground_wave', 'base_level')
+    repeat = config.get('ground_wave', 'repeat')
+    return int(base_level + amplitude * pnoise1(y * frequency, repeat=repeat))
+
 def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
-    mesh_paths = config.separate_mesh_paths
-    axis = config.get('mesh_processing', 'slice_axis')
-    max_range = config.get('sonar', 'max_range')
-    angle_width = config.get('sonar', 'angle_width')
-    num_rays = config.get('sonar', 'num_rays')
+    if config.load_data:
+        mesh_paths = config.separate_mesh_paths
+        axis = config.get('mesh_processing', 'slice_axis')
+        max_range = config.get('sonar', 'max_range')
+        angle_width = config.get('sonar', 'angle_width')
+        num_rays = config.get('sonar', 'num_rays')
 
-    if not all(isinstance(path, str) for path in mesh_paths):
-        raise ValueError("All mesh paths must be strings.")
-    if axis not in config.get('mesh_processing', 'slice_axes'):
-        raise ValueError(f"Invalid axis '{axis}', must be one of {config.get('mesh_processing', 'slice_axes')}")
+        if not all(isinstance(path, str) for path in mesh_paths):
+            raise ValueError("All mesh paths must be strings.")
+        if axis not in config.get('mesh_processing', 'slice_axes'):
+            raise ValueError(f"Invalid axis '{axis}', must be one of {config.get('mesh_processing', 'slice_axes')}")
 
-    rotation_matrix = np.array(config.get('mesh_processing', 'rotation_matrix'))
+        rotation_matrix = np.array(config.get('mesh_processing', 'rotation_matrix'))
 
-    min_y, max_y, min_z, max_z = np.inf, -np.inf, np.inf, -np.inf
-    slice_data_frames = []
+        min_y, max_y, min_z, max_z = np.inf, -np.inf, np.inf, -np.inf
+        slice_data_frames = []
 
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(process_mesh, path, slice_position, axis, idx, rotation_matrix, min_y, min_z) for idx, path in enumerate(mesh_paths)]
-        for future in futures:
-            slice_data_frame, mesh_min_y, mesh_max_y, mesh_min_z, mesh_max_z = future.result()
-            if slice_data_frame is not None:
-                slice_data_frames.append(slice_data_frame)
-                min_y, max_y = min(min_y, mesh_min_y), max(max_y, mesh_max_y)
-                min_z, max_z = min(min_z, mesh_min_z), max(max_z, mesh_max_z)
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_mesh, path, slice_position, axis, idx, rotation_matrix, min_y, min_z) for idx, path in enumerate(mesh_paths)]
+            for future in futures:
+                slice_data_frame, mesh_min_y, mesh_max_y, mesh_min_z, mesh_max_z = future.result()
+                if slice_data_frame is not None:
+                    slice_data_frames.append(slice_data_frame)
+                    min_y, max_y = min(min_y, mesh_min_y), max(max_y, mesh_max_y)
+                    min_z, max_z = min(min_z, mesh_min_z), max(max_z, mesh_max_z)
 
-    y_range = (0, max_y - min_y)
-    padding_factor = config.get('mesh_processing', 'padding_factor')
-    padding = (max_z - min_z) * padding_factor
-    z_range = (0, max_z - min_z)
-    padded_z_range = (0, z_range[1] + padding)
+        y_range = (0, max_y - min_y)
+        padding_factor = config.get('mesh_processing', 'padding_factor')
+        padding = (max_z - min_z) * padding_factor
+        z_range = (0, max_z - min_z)
+        padded_z_range = (0, z_range[1] + padding)
 
-    grid_size = config.get('mesh_processing', 'grid_size')
-    combined_label_map = np.zeros(grid_size)
+        grid_size = config.get('mesh_processing', 'grid_size')
+        combined_label_map = np.zeros(grid_size)
 
-    for data_frame in slice_data_frames:
-        data_frame['Y'] -= min_y
-        data_frame['Z'] -= min_z
-        label_map = create_label_map(data_frame, grid_size, y_range, padded_z_range)
-        if label_map is not None:
-            combined_label_map = np.maximum(combined_label_map, label_map)
+        for data_frame in slice_data_frames:
+            data_frame['Y'] -= min_y
+            data_frame['Z'] -= min_z
+            label_map = create_label_map(data_frame, grid_size, y_range, padded_z_range)
+            if label_map is not None:
+                combined_label_map = np.maximum(combined_label_map, label_map)
 
-    label_map = plot_and_return_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
-    print(f"Combined label map created with shape: {label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
+        label_map = plot_and_return_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
+        print(f"Combined label map created with shape: {label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
+    else:
+        dimensions = config.dimensions
+        pipe_center = config.pipe_center
+        pipe_radius = config.pipe_radius
+        label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
+        y_range = (0, dimensions[0])
+        padded_z_range = (0, dimensions[1])
+        print(f"Synthetic data generated with shape: {label_map.shape} and dimensions: {dimensions}")
 
     all_sonar_data, all_theta = [], []
     for pos, angle in zip(sonar_positions, angles):
