@@ -7,6 +7,7 @@ from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor
+import os
 
 def process_mesh(path: str, position: float, axis: str, mesh_index: int, rotation_matrix: np.ndarray, min_y: float, min_z: float) -> Tuple[pd.DataFrame, float, float, float, float]:
     try:
