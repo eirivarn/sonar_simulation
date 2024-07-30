@@ -73,10 +73,10 @@ class Config:
         self.ground_wave = {
             "base_level": 100,  # Middle of vertical range
             "components": [
-                {"amplitude": 75, "frequency": 0.005, "phase_shift": np.pi / 4},  # Very large wavelength, large amplitude
-                #{"amplitude": 20, "frequency": 0.005, "phase_shift": np.pi / 4},  # Large wavelength, medium amplitude
-                #{"amplitude": 12, "frequency": 0.02, "phase_shift": np.pi / 2},   # Smaller wavelength, relatively large amplitude
-                #{"amplitude": 6, "frequency": 0.03, "phase_shift": np.pi}         # Even smaller wavelength
+                {"amplitude": 100, "frequency": 0.002, "phase_shift": np.pi / 4},  # Very large wavelength, large amplitude
+                {"amplitude": 50, "frequency": 0.002, "phase_shift": np.pi / 4},  # Large wavelength, medium amplitude
+                {"amplitude": 25, "frequency": 0.006, "phase_shift": np.pi / 2},   # Smaller wavelength, relatively large amplitude
+                {"amplitude": 10, "frequency": 0.01, "phase_shift": np.pi}         # Even smaller wavelength
             ]
         }
 
