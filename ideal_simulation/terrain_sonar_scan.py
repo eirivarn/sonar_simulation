@@ -10,33 +10,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 def process_mesh(path: str, position: float, axis: str, mesh_index: int, rotation_matrix: np.ndarray, min_y: float, min_z: float) -> Tuple[pd.DataFrame, float, float, float, float]:
     try:
-        # Determine the file type from the extension
-        _, file_extension = os.path.splitext(path)
-        
-        if file_extension.lower() == '.obj':
-            # Handling OBJ files with PyVista
-            mesh = pv.read(path)
-        elif file_extension.lower() == '.csv':
-            # Handling CSV files
-            data = pd.read_csv(path)
-            points = data[['X', 'Y', 'Z']].to_numpy()
-            # Optionally create a mesh if needed using Delaunay triangulation
-            cloud = pv.PolyData(points)
-            mesh = cloud.delaunay_3d()
-            mesh = mesh.extract_geometry()  # Extract surface mesh from delaunay tetrahedralization
-        else:
-            raise ValueError(f"Unsupported file type: {file_extension}")
-
-        # Apply rotation matrix to the points of the mesh
+        mesh = pv.read(path)
         mesh.points = mesh.points.dot(rotation_matrix)
-
-        # Extract a 2D slice from the mesh
         slice_df = extract_2d_slice_from_mesh(mesh, position, axis)
         if slice_df is not None:
             slice_df = assign_mesh_id(slice_df, mesh_index + 1)
             return slice_df, slice_df['Y'].min(), slice_df['Y'].max(), slice_df['Z'].min(), slice_df['Z'].max()
     except Exception as e:
-        print(f"Error processing mesh from {path}: {e}")
+        print(f"Error reading mesh from {path}: {e}")
     return None, min_y, min_y, min_z, min_z
 
 def extract_2d_slice_from_mesh(mesh: pv.PolyData, position: float, axis: str) -> pd.DataFrame:

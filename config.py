@@ -2,12 +2,12 @@ from typing import Tuple, List, Dict, Any
 
 class Config:
     def __init__(self):
-        self.dimensions: Tuple[int, int] = (500, 1000)
-        self.pipe_center: Tuple[int, int] = (90, 500)
-        self.pipe_radius: int = 30
+        self.dimensions: Tuple[int, int] = (2000, 5000)
+        self.pipe_center: Tuple[int, int] = (200, 2500)
+        self.pipe_radius: int = 100
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
-        self.show_plots: bool = False
+        self.show_plots: bool = True
         self.get_ground_truth: bool = False
         
         self.sonar: Dict[str, Any] = {
@@ -66,6 +66,12 @@ class Config:
             "strong_signal": 2,
             "medium_signal": 1,
             "no_signal": 0
+        }
+        self.ground_wave: Dict[str, Any] = {
+            "amplitude": 10,
+            "frequency": 0.1,
+            "base_level": 100,
+            "repeat": 1024
         }
 
     def get(self, section: str, key: str) -> Any:

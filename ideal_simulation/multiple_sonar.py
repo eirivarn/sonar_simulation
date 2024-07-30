@@ -125,4 +125,4 @@ def run_ideal_multiple_sonar_simulation(sonar_positions: List[Tuple[int, int]], 
         all_sonar_data.append(sonar_data)
         all_theta.append(theta)
 
-    plot_both_views(room, y_range, z_range, sonar_positions, all_sonar_data, angles, angle_width, max_range, all_theta)
+    plot_both_views(room, y_range, z_range, sonar_positions, all_sonar_data, all_theta)
