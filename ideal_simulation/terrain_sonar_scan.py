@@ -193,11 +193,16 @@ def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: L
         pipe_center = config.pipe_center
         pipe_radius = config.pipe_radius
         label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
-        y_range = (0, dimensions[0])
-        padded_z_range = (0, dimensions[1])
+        y_range = (0, dimensions[1])
+        padded_z_range = (0, dimensions[0])
         print(f"Synthetic data generated with shape: {label_map.shape} and dimensions: {dimensions}")
+        max_range: int = config.get('sonar', 'max_range')
+        angle_width: float = config.get('sonar', 'angle_width')
+        num_rays: int = config.get('sonar', 'num_rays')
+        
 
     all_sonar_data, all_theta = [], []
+    
     for pos, angle in zip(sonar_positions, angles):
         sonar_data, theta = ray_cast(label_map, pos, angle, max_range, angle_width, num_rays)
         all_sonar_data.append(sonar_data)

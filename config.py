@@ -9,7 +9,7 @@ class Config:
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
         self.show_plots: bool = True
         self.get_ground_truth: bool = False
-        self.load_data: bool = True  
+        self.load_data: bool = False  
         
         self.sonar: Dict[str, Any] = {
             "max_range": 5000,
