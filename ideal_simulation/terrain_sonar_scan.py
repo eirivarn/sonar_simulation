@@ -125,10 +125,14 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
     return cartesian_coords
 
 def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: Tuple[int, int], pipe_radius: int, ground_wave: Callable[[int], int]) -> np.ndarray:
-    room = np.zeros(dimensions)
+    room = np.zeros(dimensions, dtype=int)
     y, x = np.ogrid[:dimensions[0], :dimensions[1]]
     distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
-    room += np.clip(1 - (distance_from_center - pipe_radius), 0, 1)
+    
+    # Label the pipe as 1
+    room[distance_from_center <= pipe_radius] = 2
+    
+    # Label the ground as 2
     for y in range(dimensions[1]):
         x = ground_wave(y)
         if 0 <= x < dimensions[0]:
