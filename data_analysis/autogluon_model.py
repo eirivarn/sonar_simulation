@@ -7,30 +7,18 @@ from sklearn.metrics import mean_squared_error
 # Function to load data
 def load_data(filepath):
     df = pd.read_csv(filepath)
+    if df.empty:
+        print("Error: Data file is empty.")
+    else:
+        print(f"Data loaded successfully with {df.shape[0]} records.")
     return df
 
 # Function to prepare data for modeling
 def prepare_data_for_modeling(df):
-    label_columns = [f'label_{i}' for i in range(10)]
+    label_columns = [f'label_{i}' for i in range(-11, 12)]
     X = df[label_columns]
     y = df['abs_diff_stability']
     return X, y
-
-# Function to remove outliers
-def remove_outliers(X, y, z_thresh=3):
-    from scipy.stats import zscore
-    z_scores_X = np.abs(zscore(X))
-    z_scores_y = np.abs(zscore(y))
-    
-    filter_X = (z_scores_X < z_thresh).all(axis=1)
-    filter_y = z_scores_y < z_thresh
-    
-    combined_filter = filter_X & filter_y
-    
-    X_clean = X[combined_filter]
-    y_clean = y[combined_filter]
-    
-    return X_clean, y_clean
 
 # Function to train model with AutoGluon
 def train_with_autogluon(train_data):
@@ -48,25 +36,24 @@ def train_with_autogluon(train_data):
 def main(filepath, random_split=True):
     df = load_data(filepath)
     
-    # Prepare and clean data
+    # Prepare data
     X, y = prepare_data_for_modeling(df)
-    X_clean, y_clean = remove_outliers(X, y)
     
     # Split the data into training and test sets based on user choice
     if random_split:
-        X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, test_size=0.9, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
     else:
-        split_index = int(len(X_clean) * 0.9)
-        X_train, X_test = X_clean[:split_index], X_clean[split_index:]
-        y_train, y_test = y_clean[:split_index], y_clean[split_index:]
+        split_index = int(len(X) * 0.9)
+        X_train, X_test = X[:split_index], X[split_index:]
+        y_train, y_test = y[:split_index], y[split_index:]
     
     # Create training and test datasets for AutoGluon
     train_data = pd.concat([X_train, y_train], axis=1)
-    train_data.columns = [f'label_{i}' for i in range(10)] + ['abs_diff_stability']
+    train_data.columns = [f'label_{i}' for i in range(-11, 12)] + ['abs_diff_stability']
     train_data = TabularDataset(train_data)
     
     test_data = pd.concat([X_test, y_test], axis=1)
-    test_data.columns = [f'label_{i}' for i in range(10)] + ['abs_diff_stability']
+    test_data.columns = [f'label_{i}' for i in range(-11, 12)] + ['abs_diff_stability']
     test_data = TabularDataset(test_data)
 
     # Train the model
@@ -91,11 +78,16 @@ def main(filepath, random_split=True):
     print(f"Train RMSE: {train_rmse}")
 
     # Print leaderboard
-    leaderboard = predictor.leaderboard()
+    leaderboard = predictor.leaderboard(test_data)
     print(leaderboard)
+
+    # Compute feature importance
+    importance = predictor.feature_importance(test_data)
+    print("Feature Importance:")
+    print(importance)
 
 # Specify the path to your processed CSV file
 processed_data_path = 'data_processed/processed_signal_data.csv'
 
 if __name__ == "__main__":
-    main(processed_data_path, random_split=False)
+    main(processed_data_path, random_split=True)

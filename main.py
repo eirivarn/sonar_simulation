@@ -8,7 +8,7 @@ from config import config
 
 def main():
     # ************ Simulation Parameters ************ 
-    sonar_positions_1 =  [(1500, 3000)] # (y, x)
+    sonar_positions_1 =  [(3500, 3000)] # (y, x)
     
     slice_position = 70
     slice_positions = config.get('mesh_processing', 'slice_positions')

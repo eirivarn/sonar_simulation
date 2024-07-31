@@ -14,7 +14,7 @@ def calculate_correlations(df):
     """
     # Select only label columns plus the stability percentage
     label_columns = [col for col in df.columns if 'label_' in col]
-    columns_of_interest = label_columns + ['stability_percentage']
+    columns_of_interest = label_columns + ['abs_diff_stability']
     correlation_matrix = df[columns_of_interest].corr()
     
     # Plotting the correlation matrix

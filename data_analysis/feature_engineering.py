@@ -36,10 +36,10 @@ def save_processed_data(signal_df, folder='data_processed'):
     signal_df.to_csv(filepath, index=False)
     print(f"Data saved to {filepath}")
 
-def main(signal_csv_paths, gt_csv_path):
+def main(signal_csv_paths, gt_csv_paths):
     combined_df = pd.DataFrame()
-    for signal_path in signal_csv_paths:
-        signal_df, gt_df = load_data(signal_path, gt_csv_path)
+    for signal_path, gt_path in zip(signal_csv_paths, gt_csv_paths):
+        signal_df, gt_df = load_data(signal_path, gt_path)
         signal_df = add_features(signal_df, gt_df)
         combined_df = pd.concat([combined_df, signal_df], ignore_index=True)
     
@@ -47,15 +47,14 @@ def main(signal_csv_paths, gt_csv_path):
 
 # Specify the paths to your CSV files
 signal_csv_paths = [
-    'data/pos_&_neg_values/signal_results_s1_1000_2000_s2_1000_3740_a1_130_a2_230_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_1000_2000_a1_130_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_1500_2870_a1_180_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_1000_3500_a1_220_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_1000_2000_a1_150_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_1000_3500_a1_200_with_labeling.csv'
+    'data/generated/s1_3500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_3500_3000_a1_180_with_labeling.csv',
+    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_1500_3000_a1_180_with_labeling.csv'
 ]
 
-gt_csv_path = 'data/ground_truth_results.csv'
+gt_csv_paths = [
+    'data/generated/s1_3500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
+    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_ground_truth_results.csv'
+]
 
 if __name__ == "__main__":
-    main(signal_csv_paths, gt_csv_path)
+    main(signal_csv_paths, gt_csv_paths)

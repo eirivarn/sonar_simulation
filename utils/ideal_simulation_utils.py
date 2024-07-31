@@ -5,6 +5,8 @@ from typing import List, Tuple, Union
 from ideal_simulation.world_mapping import run_3d_mapping_simulation
 import matplotlib.pyplot as plt
 from config import config
+from matplotlib.colors import Normalize
+
 
 def format_filename(base_name: str, sonar_positions: List[Tuple[int, int]], angles: List[int]) -> str:
     pos_str = "_".join([f"s{i+1}_{y}_{x}" for i, (y, x) in enumerate(sonar_positions)])
@@ -14,19 +16,36 @@ def format_filename(base_name: str, sonar_positions: List[Tuple[int, int]], angl
 
 def calculate_x_distances_and_labels(x_circle, curve_x, radius):
     labels = []
-    label_range = np.linspace(x_circle - 10 * radius, x_circle + 10 * radius, num=21)  # 21 points for labels from -10 to 10
-    
-    for x in curve_x:
-        if x < x_circle - 10 * radius:
-            label = -11  # More than 10 units to the left
-        elif x > x_circle + 10 * radius:
-            label = 11  # More than 10 units to the right
+    half_radius = radius / 2
+    label_width = half_radius  # Each label spans 50 units (25 on each side)
+
+    # Create the label starts centered around x_circle
+    label_starts = [x_circle + (i - 20) * label_width for i in range(42)]
+    label_ranges = [(label_starts[i] - label_width / 2, label_starts[i] + label_width / 2) for i in range(len(label_starts))]
+
+    # Debug: print label ranges
+    for i, range_ in enumerate(label_ranges):
+        if i == 0:
+            print(f"Label -21: Range from -inf to {range_[1]}")
+        elif i == len(label_ranges) - 1:
+            print(f"Label 21: Range from {range_[0]} to inf")
         else:
-            # Calculate the theoretical label index
-            label_index = np.searchsorted(label_range, x, side='right') - 1
-            label = label_index - 10  # Convert index to range from -10 to 10
+            print(f"Label {i - 20}: Range from {range_[0]} to {range_[1]}")
+
+    for x in curve_x:
+        if x < label_ranges[0][1]:
+            label = -21  # Anything further left than the start of the first label
+        elif x > label_ranges[-1][0]:
+            label = 21   # Anything further right than the end of the last label
+        else:
+            # Assign label based on position
+            for idx, (start, end) in enumerate(label_ranges):
+                if start <= x < end:
+                    label = idx - 20
+                    break
         labels.append(label)
     return labels
+
 
 def save_initial_results_to_csv(filename: str, data: List[Union[None, Tuple[float, float, float, np.ndarray, np.ndarray, str, float, float, float, float]]]) -> None:
     rows = []
@@ -81,27 +100,35 @@ def label_and_save_results(input_filename: str, output_filename: str):
         radius = row['radius']
         curve_x = eval(row['curve_x'])
         curve_y = eval(row['curve_y'])
+
+        print(f"Processing row {i}: x_circle = {x_circle}, radius = {radius}")
         labels = calculate_x_distances_and_labels(x_circle, curve_x, radius)
-        # Initialize the dictionary to include all possible labels and extra labels for distant points
-        label_counts = {label: 0 for label in range(-11, 12)}  # From -11 to 11
+        
+        label_counts = {label: 0 for label in range(-21, 22)}  # From -21 to 21
         for label in labels:
             label_counts[label] += 1
+
         row_data = row.to_dict()
-        row_data.pop('x_circle')
-        row_data.pop('y_circle')
-        row_data.pop('radius')
-        row_data.pop('curve_x')
-        row_data.pop('curve_y')
         row_data.update({f'label_{label}': count for label, count in label_counts.items()})
         labeled_rows.append(row_data)
+        
         if config.show_plots:
-            print(f"Plotting row {i}")
-            plt.scatter(curve_x, curve_y, c=labels, cmap='viridis')
-            plt.colorbar(label='Label')
-            plt.title(f'Curve Points Colored by Label for row {i}')
-            plt.xlabel('X')
-            plt.ylabel('Y')
+            fig, ax = plt.subplots()
+            cmap = plt.get_cmap('coolwarm', 43)  # Adjusted for new label range
+            norm = plt.Normalize(vmin=-21, vmax=21)
+            scatter = ax.scatter(curve_x, curve_y, c=labels, cmap=cmap, norm=norm, alpha=0.5)
+            plt.colorbar(scatter, label='Label')
+            ax.set_title(f'Curve Points Colored by Label for row {i}')
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            plt.grid(True)
+            
+            # Add text labels to the plot
+            for j, txt in enumerate(labels):
+                ax.annotate(txt, (curve_x[j], curve_y[j]), fontsize=8, alpha=0.7)
+
             plt.show()
+    
     if labeled_rows:
         labeled_df = pd.DataFrame(labeled_rows)
         labeled_df.to_csv(output_filename, index=False)
@@ -124,7 +151,5 @@ def run_detection_evaluation(sonar_positions_1, angles, slice_positions):
         save_initial_results_to_csv(signal_filename, signal_results)
         save_ground_truth_results_to_csv(ground_truth_filename, ground_truth_results)
         label_and_save_results(signal_filename, signal_filename.replace('.csv', '_with_labeling.csv'))
-        
-        
     else:
         print("No results to save.")
