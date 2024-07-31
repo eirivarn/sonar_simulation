@@ -117,7 +117,7 @@ def run_detection_evaluation(sonar_positions_1, angles, slice_positions):
             signal_filename = format_filename('signal_results', sonar_positions_1, angles)
             ground_truth_filename = 'data/ground_truth_results.csv'
         else: 
-            signal_filename = 'data/generated_signal_results.csv'
+            signal_filename = format_filename('generated_signal_results.csv', sonar_positions_1, angles)
             ground_truth_filename = 'data/generated_ground_truth_results.csv'
         
         save_initial_results_to_csv(signal_filename, signal_results)

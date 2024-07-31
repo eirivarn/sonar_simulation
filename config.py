@@ -55,7 +55,7 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 5,
             "grid_size": (700, 700),
-            "slice_positions": list(range(-90, 90, 40)),
+            "slice_positions": list(range(-90, 90, 30)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
@@ -71,7 +71,7 @@ class Config:
             "no_signal": 0
         }
         self.ground_wave = {
-            "base_level": 100,  # Middle of vertical range
+            "base_level": 95,  # Middle of vertical range
             "components": [
                 {"amplitude": 100, "frequency": 0.002, "phase_shift": np.pi / 4},  # Very large wavelength, large amplitude
                 {"amplitude": 50, "frequency": 0.002, "phase_shift": np.pi / 4},  # Large wavelength, medium amplitude
