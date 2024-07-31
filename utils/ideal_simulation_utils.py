@@ -16,26 +16,25 @@ def format_filename(base_name: str, sonar_positions: List[Tuple[int, int]], angl
 
 def calculate_x_distances_and_labels(x_circle, curve_x, radius):
     labels = []
-    half_radius = radius / 2
-    label_width = half_radius  # Each label spans 50 units (25 on each side)
+    label_width = 50  # Each label spans 50 units (25 on each side)
+    num_labels = 41  # Total labels from -20 to 20
 
     # Create the label starts centered around x_circle
-    label_starts = [x_circle + (i - 20) * label_width for i in range(42)]
+    # Start from -20 label's start to 20 label's end
+    start_label_center = x_circle - 20 * label_width
+    label_starts = [start_label_center + i * label_width for i in range(num_labels)]
     label_ranges = [(label_starts[i] - label_width / 2, label_starts[i] + label_width / 2) for i in range(len(label_starts))]
 
     # Debug: print label ranges
-    for i, range_ in enumerate(label_ranges):
-        if i == 0:
-            print(f"Label -21: Range from -inf to {range_[1]}")
-        elif i == len(label_ranges) - 1:
-            print(f"Label 21: Range from {range_[0]} to inf")
-        else:
-            print(f"Label {i - 20}: Range from {range_[0]} to {range_[1]}")
+    # print(f"Label -21: Range from -inf to {label_ranges[0][0]}")
+    # for i, range_ in enumerate(label_ranges):
+    #     print(f"Label {i - 20}: Range from {range_[0]} to {range_[1]}")
+    # print(f"Label 21: Range from {label_ranges[-1][1]} to inf")
 
     for x in curve_x:
-        if x < label_ranges[0][1]:
+        if x < label_ranges[0][0]:
             label = -21  # Anything further left than the start of the first label
-        elif x > label_ranges[-1][0]:
+        elif x > label_ranges[-1][1]:
             label = 21   # Anything further right than the end of the last label
         else:
             # Assign label based on position
