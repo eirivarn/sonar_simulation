@@ -66,7 +66,20 @@ def cluster_circle_points(x: np.ndarray, y: np.ndarray, algorithm: str, is_real:
         return circle_points, labels == main_label
     return np.array([]), np.zeros_like(labels, dtype=bool)
 
-def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False, distance_threshold: float = 50.0) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
+def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dict[str, Union[int, float]]], is_real: bool = False, use_clustering=True, distance_threshold: float = 50.0) -> Tuple[Union[float, None], Union[float, None], Union[float, None], np.ndarray]:
+    if is_real:
+        if not config.load_data:
+            xc = config.pipe_center[1]
+            yc = config.pipe_center[0]
+            radius = config.pipe_radius
+        else:
+            xc, yc, radius = fit_circle_to_points(x, y)
+        return xc, yc, radius, np.ones(x.shape, dtype=bool)
+    
+    if not use_clustering:
+        xc, yc, radius = fit_circle_to_points(x, y)
+        return xc, yc, radius, np.ones(x.shape, dtype=bool)
+    
     circle_points_dict: Dict[str, np.ndarray] = {}
     algorithms = list(clustering_params.keys())
     
@@ -79,10 +92,6 @@ def detect_circle(x: np.ndarray, y: np.ndarray, clustering_params: Dict[str, Dic
 
         plt.figure(figsize=(10, 8))
         plt.scatter(x, y, c='lightgray', label='All Points')
-
-    if is_real:
-        xc, yc, radius = fit_circle_to_points(x, y)
-        return xc, yc, radius, np.ones(x.shape, dtype=bool)
 
     # Combine results for common points
     all_masks = np.column_stack([np.isin(np.column_stack((x, y)), circle_points_dict[alg]).all(axis=1) for alg in algorithms])

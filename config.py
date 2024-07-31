@@ -3,13 +3,13 @@ import numpy as np
 
 class Config:
     def __init__(self):
-        self.dimensions: Tuple[int, int] = (2000, 5000)
+        self.dimensions: Tuple[int, int] = (4000, 6000)
         self.area_dimensions: Tuple[int, int] = (35, 1000)
-        self.pipe_center: Tuple[int, int] = (200, 2500)
+        self.pipe_center: Tuple[int, int] = (200, 3000)
         self.pipe_radius: int = 100
         self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
-        self.show_plots: bool = False
+        self.show_plots: bool = True
         self.get_ground_truth: bool = True
         self.load_data: bool = False  
         
@@ -53,7 +53,7 @@ class Config:
         self.mesh_processing: Dict[str, Any] = {
             "slice_axis": 'x',
             "slice_axes": ['x', 'y', 'z'],
-            "padding_factor": 5,
+            "padding_factor": 10,
             "grid_size": (700, 700),
             "slice_positions": list(range(-90, 90, 30)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
