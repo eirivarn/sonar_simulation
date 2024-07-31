@@ -166,7 +166,6 @@ def extract_ground_truth(label_map: np.ndarray, clustering_params: dict, is_real
         print("GROUND TRUTH: Circle detection failed.")
         return None
     
-    print('Pipe radius:', radius)
     # Apply the translation to all points
     translation_x, translation_y = -x_circle, -y_circle
     circle_x_translated, circle_y_translated = circle_x + translation_x, circle_y + translation_y
@@ -223,7 +222,6 @@ def run_pipeline_seafloor_detection(slice_position: int,
         circle_x, circle_y, _, _ = extract_curve_and_circle_points(signal_map, 'signal')
         x_circle, y_circle, radius, common_mask = detect_circle(circle_x, circle_y, clustering_params, use_clustering=False, is_real=False)
 
-    print('Pipe radius:', radius)
     # Apply the translation to all points
     translation_x, translation_y = -x_circle, -y_circle
     x_translated, y_translated = x + translation_x, y + translation_y
