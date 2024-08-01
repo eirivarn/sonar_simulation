@@ -100,7 +100,8 @@ def label_and_save_results(input_filename: str, output_filename: str):
         curve_x = eval(row['curve_x'])
         curve_y = eval(row['curve_y'])
 
-        print(f"Processing row {i}: x_circle = {x_circle}, radius = {radius}")
+        if config.verbose:
+            print(f"Processing row {i}: x_circle = {x_circle}, radius = {radius}")
         labels = calculate_x_distances_and_labels(x_circle, curve_x, radius)
         
         label_counts = {label: 0 for label in range(-21, 22)}  # From -21 to 21

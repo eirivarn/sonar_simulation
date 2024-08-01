@@ -65,21 +65,21 @@ def plot_curve_and_circle(x: np.ndarray, y: np.ndarray, xc: float, yc: float, ra
     plt.close()
     x_remaining, y_remaining = exclude_points_near_circle(x, y, xc, yc, radius)
     x_new, y_new = interpolate_remaining_points(x_remaining, y_remaining)
+    if config.verbose:
+        plt.figure()
+        plt.scatter(x, y, color='gray', label='Original points')
+        plt.plot(x_new, y_new, color='green', label='Interpolated curve')
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.xlabel('X coordinate')
+        plt.ylabel('Y coordinate')
+        plt.title('Interpolated Curve from Remaining Points')
+        plt.legend()
+        plt.grid(True)
 
-    plt.figure()
-    plt.scatter(x, y, color='gray', label='Original points')
-    plt.plot(x_new, y_new, color='green', label='Interpolated curve')
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.xlabel('X coordinate')
-    plt.ylabel('Y coordinate')
-    plt.title('Interpolated Curve from Remaining Points')
-    plt.legend()
-    plt.grid(True)
-
-    os.makedirs(folder, exist_ok=True)
-    file_path = os.path.join(folder, 'Interpolated_Curve.png')
-    plt.savefig(file_path)
-    plt.close()
+        os.makedirs(folder, exist_ok=True)
+        file_path = os.path.join(folder, 'Interpolated_Curve.png')
+        plt.savefig(file_path)
+        plt.close()
 
     return x_new, y_new
 

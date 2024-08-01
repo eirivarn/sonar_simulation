@@ -63,23 +63,18 @@ def create_label_map(df: pd.DataFrame, grid_size: Tuple[int, int], x_range: Tupl
     return label_map
 
 def plot_and_return_label_map(label_map: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[int, int], title: str = 'Label Map of 2D Slices', resolution: int = 1) -> np.ndarray:
+    # Calculate new dimensions
     y_size = int((y_range[1] - y_range[0]) / resolution)
     z_size = int((z_range[1] - z_range[0]) / resolution)
-    rescaled_map = np.zeros((y_size, z_size))
 
-    y_original = np.linspace(y_range[0], y_range[1], label_map.shape[1])
-    z_original = np.linspace(z_range[0], z_range[1], label_map.shape[0])
-    points = np.meshgrid(z_original, y_original)
+    # Calculate indices directly for resampling
+    y_indices = np.linspace(0, label_map.shape[1] - 1, y_size, dtype=int)
+    z_indices = np.linspace(0, label_map.shape[0] - 1, z_size, dtype=int)
+    
+    # Use advanced indexing to create the rescaled map
+    rescaled_map = label_map[np.ix_(z_indices, y_indices)]
 
-    z_new = np.linspace(z_range[0], z_range[1], z_size)
-    y_new = np.linspace(y_range[0], y_range[1], y_size)
-    grid_y, grid_z = np.meshgrid(z_new, y_new)
-
-    points_flatten = (points[0].flatten(), points[1].flatten())
-    values_flatten = label_map.flatten()
-
-    rescaled_map = griddata(points_flatten, values_flatten, (grid_y, grid_z), method='nearest')
-
+    # Optionally display the plot
     if config.show_plots:
         plt.figure(figsize=(12, 6))
         plt.imshow(rescaled_map.T, cmap='viridis', origin='lower')
@@ -124,20 +119,23 @@ def transform_and_plot_coordinates(transformed_coords: List[Tuple[float, float, 
     
     return cartesian_coords
 
-def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], pipe_center: Tuple[int, int], pipe_radius: int) -> np.ndarray:
+def create_room_with_pipe_and_ground(dimensions: Tuple[int, int], circle_center: Tuple[int, int], circle_radius: int) -> np.ndarray:
     room = np.zeros(dimensions, dtype=int)
     y, x = np.ogrid[:dimensions[0], :dimensions[1]]
-    distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
+    distance_from_center = np.sqrt((x - circle_center[1])**2 + (y - circle_center[0])**2)
     
-    # Label the pipe as 1
-    room[distance_from_center <= pipe_radius] = 2
+    # Label the outer rim
+    rim_thickness = 4
+    rim_mask = (distance_from_center > circle_radius) & (distance_from_center <= circle_radius + rim_thickness)
+    room[rim_mask] = 2
     
     # Generate the ground wave across the entire y range and apply it
     ground_wave = ground_wave_function(np.arange(dimensions[1]))
     for y in range(dimensions[1]):
-        x = ground_wave[y]
+        x = int(ground_wave[y])
         if 0 <= x < dimensions[0]:
-            room[x, y] = 1
+            room[x, y] = 1  # Use a different label for the ground wave
+    
     return room
 
 def ground_wave_function(y: np.ndarray) -> np.ndarray:

@@ -4,32 +4,39 @@ from matplotlib.cm import viridis
 from typing import List, Tuple, Union
 from ideal_simulation.basic_sonar import create_room_with_pipe_and_ground, ground_wave_function, ray_cast
 from config import config
+from concurrent.futures import ThreadPoolExecutor
 
 def transform_to_global(pos: Tuple[int, int], sonar_data: List[Tuple[int, int]], theta: List[float]) -> List[Tuple[float, float, int]]:
-    """ Transform intersections from sonar back to the global coordinate system. """
-    global_coords: List[Tuple[float, float, int]] = []
-    for (r, strength), t in zip(sonar_data, theta):
-        x = pos[0] + r * np.cos(t)
-        y = pos[1] + r * np.sin(t)
-        global_coords.append((x, y, strength))
-    return global_coords
+    theta = np.array(theta)
+    r, strength = zip(*sonar_data)
+    r = np.array(r)
+    x = pos[0] + r * np.cos(theta)
+    y = pos[1] + r * np.sin(theta)
+    return list(zip(x, y, strength))
 
 def transform_to_reference_sonar(ref_pos: Tuple[int, int], ref_angle: float, global_coords: List[Tuple[float, float, int]]) -> List[Tuple[float, float, int]]:
-    """ Transform global coordinates to the reference sonar's coordinate system. """
-    transformed_coords: List[Tuple[float, float, int]] = []
-    ref_angle_rad: float = np.radians(ref_angle)
-    cos_angle: float = np.cos(-ref_angle_rad)
-    sin_angle: float = np.sin(-ref_angle_rad)
-
-    for (x, y, strength) in global_coords:
-        dx: float = x - ref_pos[0]
-        dy: float = y - ref_pos[1]
-        transformed_x: float = dx * cos_angle - dy * sin_angle
-        transformed_y: float = dx * sin_angle + dy * cos_angle
-        transformed_r: float = np.sqrt(transformed_x**2 + transformed_y**2)
-        transformed_theta: float = np.arctan2(transformed_y, transformed_x)
-        transformed_coords.append((transformed_r, transformed_theta, strength))
-    return transformed_coords
+    """Transform global coordinates to the reference sonar's coordinate system using vectorized operations."""
+    # Convert list of tuples to a structured NumPy array for vectorized operations
+    global_coords = np.array(global_coords, dtype=[('x', float), ('y', float), ('strength', int)])
+    
+    # Calculate rotation matrix components
+    ref_angle_rad = np.radians(ref_angle)
+    cos_angle = np.cos(-ref_angle_rad)
+    sin_angle = np.sin(-ref_angle_rad)
+    
+    # Subtract reference position (broadcasting)
+    dx = global_coords['x'] - ref_pos[0]
+    dy = global_coords['y'] - ref_pos[1]
+    
+    # Apply the rotation matrix
+    transformed_x = dx * cos_angle - dy * sin_angle
+    transformed_y = dx * sin_angle + dy * cos_angle
+    
+    # Convert to polar coordinates
+    transformed_r = np.sqrt(transformed_x**2 + transformed_y**2)
+    transformed_theta = np.arctan2(transformed_y, transformed_x)
+    
+    return list(zip(transformed_r, transformed_theta, global_coords['strength']))
 
 def find_farthest_points(sonar_positions: List[Tuple[int, int]]) -> Tuple[Union[Tuple[int, int], None], Union[Tuple[int, int], None]]:
     max_distance: float = 0
@@ -106,23 +113,30 @@ def plot_both_views(world: np.ndarray, y_range: Tuple[int, int], z_range: Tuple[
     return [(r, t, strength) for r, t, strength in transformed_coords]
 
 def run_ideal_multiple_sonar_simulation(sonar_positions: List[Tuple[int, int]], angles: List[float]) -> None:
-    dimensions: Tuple[int, int] = config.dimensions
-    pipe_center: Tuple[int, int] = config.pipe_center
-    pipe_radius: int = config.pipe_radius
-    max_range: int = config.get('sonar', 'max_range')
-    angle_width: float = config.get('sonar', 'angle_width')
-    num_rays: int = config.get('sonar', 'num_rays')
+    dimensions = config.dimensions
+    pipe_center = config.pipe_center
+    pipe_radius = config.pipe_radius
+    max_range = config.get('sonar', 'max_range')
+    angle_width = config.get('sonar', 'angle_width')
+    num_rays = config.get('sonar', 'num_rays')
 
-    room: np.ndarray = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
-    y_range: Tuple[int, int] = (0, dimensions[1])
-    z_range: Tuple[int, int] = (0, dimensions[0])
+    room = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius, ground_wave_function)
+    y_range = (0, dimensions[1])
+    z_range = (0, dimensions[0])
 
-    all_sonar_data: List[List[Tuple[int, int]]] = []
-    all_theta: List[List[float]] = []
+    # Prepare to collect all sonar data and theta values
+    all_sonar_data = []
+    all_theta = []
 
-    for pos, angle in zip(sonar_positions, angles):
-        sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
-        all_sonar_data.append(sonar_data)
-        all_theta.append(theta)
-
+    # Use ThreadPoolExecutor to parallelize sonar data collection
+    with ThreadPoolExecutor(max_workers=len(sonar_positions)) as executor:
+        futures = []
+        for pos, angle in zip(sonar_positions, angles):
+            futures.append(executor.submit(ray_cast, room, pos, angle, max_range, angle_width, num_rays))
+        
+        for future in futures:
+            sonar_data, theta = future.result()
+            all_sonar_data.append(sonar_data)
+            all_theta.append(theta)
+ 
     plot_both_views(room, y_range, z_range, sonar_positions, all_sonar_data, all_theta)

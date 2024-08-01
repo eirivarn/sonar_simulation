@@ -15,7 +15,7 @@ def load_data(filepath):
 
 # Function to prepare data for modeling
 def prepare_data_for_modeling(df):
-    label_columns = [f'label_{i}' for i in range(-11, 12)]
+    label_columns = [f'label_{i}' for i in range(-21, 22)]
     X = df[label_columns]
     y = df['abs_diff_stability']
     return X, y
@@ -49,11 +49,11 @@ def main(filepath, random_split=True):
     
     # Create training and test datasets for AutoGluon
     train_data = pd.concat([X_train, y_train], axis=1)
-    train_data.columns = [f'label_{i}' for i in range(-11, 12)] + ['abs_diff_stability']
+    train_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['abs_diff_stability']
     train_data = TabularDataset(train_data)
     
     test_data = pd.concat([X_test, y_test], axis=1)
-    test_data.columns = [f'label_{i}' for i in range(-11, 12)] + ['abs_diff_stability']
+    test_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['abs_diff_stability']
     test_data = TabularDataset(test_data)
 
     # Train the model
