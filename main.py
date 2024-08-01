@@ -26,7 +26,7 @@ def main():
         # ************ Simulation Parameters ************ 
         sonar_positions_1 =  [(3500, 2820)] # (y, x)
         
-        slice_position = 18
+        slice_position = 26
         slice_positions = config.get('mesh_processing', 'slice_positions')
         
         angles = [180]  # direction in degrees (mid-point direction pointing down)
@@ -41,10 +41,10 @@ def main():
         # run_ideal_mesh_sonar_scan_simulation(slice_position, sonar_positions_1, angles)
         
         # ************ Run Sonar Simulation ************
-        # run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)
+        run_pipeline_seafloor_detection(slice_position, sonar_positions_1, angles, get_ground_truth=False, use_clustering=False)
         
         # ************ Run Detection Evaluation ************
-        run_detection_evaluation(sonar_positions_1, angles, slice_positions)
+        # run_detection_evaluation(sonar_positions_1, angles, slice_positions)
     
     
 if __name__ == "__main__":

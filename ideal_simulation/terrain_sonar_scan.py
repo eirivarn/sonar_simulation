@@ -67,12 +67,20 @@ def plot_and_return_label_map(label_map: np.ndarray, y_range: Tuple[int, int], z
     y_size = int((y_range[1] - y_range[0]) / resolution)
     z_size = int((z_range[1] - z_range[0]) / resolution)
 
-    # Calculate indices directly for resampling
-    y_indices = np.linspace(0, label_map.shape[1] - 1, y_size, dtype=int)
-    z_indices = np.linspace(0, label_map.shape[0] - 1, z_size, dtype=int)
-    
-    # Use advanced indexing to create the rescaled map
-    rescaled_map = label_map[np.ix_(z_indices, y_indices)]
+    rescaled_map = np.zeros((y_size, z_size))
+
+    y_original = np.linspace(y_range[0], y_range[1], label_map.shape[1])
+    z_original = np.linspace(z_range[0], z_range[1], label_map.shape[0])
+    points = np.meshgrid(z_original, y_original)
+
+    z_new = np.linspace(z_range[0], z_range[1], z_size)
+    y_new = np.linspace(y_range[0], y_range[1], y_size)
+    grid_y, grid_z = np.meshgrid(z_new, y_new)
+
+    points_flatten = (points[0].flatten(), points[1].flatten())
+    values_flatten = label_map.flatten()
+
+    rescaled_map = griddata(points_flatten, values_flatten, (grid_y, grid_z), method='nearest')
 
     # Optionally display the plot
     if config.show_plots:
@@ -176,45 +184,48 @@ def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: L
                     min_z, max_z = min(min_z, mesh_min_z), max(max_z, mesh_max_z)
 
         y_range = (0, max_y - min_y)
-        padding_factor = config.get('mesh_processing', 'padding_factor')
-        padding = (max_z - min_z) * padding_factor
         z_range = (0, max_z - min_z)
-        padded_z_range = (0, z_range[1] + padding)
-
         grid_size = config.get('mesh_processing', 'grid_size')
         combined_label_map = np.zeros(grid_size)
 
         for data_frame in slice_data_frames:
             data_frame['Y'] -= min_y
             data_frame['Z'] -= min_z
-            label_map = create_label_map(data_frame, grid_size, y_range, padded_z_range)
+            label_map = create_label_map(data_frame, grid_size, y_range, z_range)
             if label_map is not None:
                 combined_label_map = np.maximum(combined_label_map, label_map)
 
-        label_map = plot_and_return_label_map(combined_label_map, y_range, padded_z_range, title='Combined Label Map of All Meshes')
-        print(f"Combined label map created with shape: {label_map.shape} and ranges Y: {y_range}, Z: {z_range}")
+        # Generate the label map
+        label_map = plot_and_return_label_map(combined_label_map, y_range, z_range, title='Combined Label Map of All Meshes')
+
+        # Add padding after generating the label map
+        padding_factor = config.get('mesh_processing', 'padding_factor')
+        padding = (max_z - min_z) * padding_factor
+        padded_z_range = (0, z_range[1] + padding)
+        padding_height = int((max_z - min_z) * padding_factor)
+        padded_label_map = np.vstack([label_map, np.zeros((padding_height, label_map.shape[1]))])
+
+        if config.verbose:
+            print(f"Label map padded with additional {padding_height} rows in Z direction. New shape: {padded_label_map.shape}")
+
     else:
         dimensions = config.dimensions
         pipe_center = config.pipe_center
         pipe_radius = config.pipe_radius
         label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius)
         y_range = (0, dimensions[1])
-        padded_z_range = (0, dimensions[0])
+        z_range = (0, dimensions[0])
         print(f"Synthetic data generated with shape: {label_map.shape} and dimensions: {dimensions}")
-        max_range: int = config.get('sonar', 'max_range')
-        angle_width: float = config.get('sonar', 'angle_width')
-        num_rays: int = config.get('sonar', 'num_rays')
-        
 
     all_sonar_data, all_theta = [], []
     
     for pos, angle in zip(sonar_positions, angles):
-        sonar_data, theta = ray_cast(label_map, pos, angle, max_range, angle_width, num_rays)
+        sonar_data, theta = ray_cast(padded_label_map, pos, angle, max_range, angle_width, num_rays)
         all_sonar_data.append(sonar_data)
         all_theta.append(theta)
 
-    transformed_coords = plot_both_views(label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, all_theta)
+    transformed_coords = plot_both_views(padded_label_map, y_range, padded_z_range, sonar_positions, all_sonar_data, all_theta)
 
     cartesian_coords = transform_and_plot_coordinates(transformed_coords, y_range, padded_z_range)
 
-    return cartesian_coords, label_map
+    return cartesian_coords, padded_label_map
