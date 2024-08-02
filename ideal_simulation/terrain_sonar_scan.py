@@ -1,13 +1,12 @@
 import numpy as np
 import pyvista as pv
 import pandas as pd
-from typing import List, Tuple, Callable
+from typing import List, Tuple
 from config import config
 from ideal_simulation.multiple_sonar import plot_both_views, ray_cast
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor
-from noise import pnoise1
 
 
 def process_mesh(path: str, position: float, axis: str, mesh_index: int, rotation_matrix: np.ndarray, min_y: float, min_z: float) -> Tuple[pd.DataFrame, float, float, float, float]:

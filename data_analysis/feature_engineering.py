@@ -47,19 +47,21 @@ def main(signal_csv_paths, gt_csv_paths):
 
 # Specify the paths to your CSV files
 signal_csv_paths = [
-    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_1500_3000_a1_180_with_labeling.csv',
-    'data/generated/s1_3000_1000_a1_145_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_a1_145_with_labeling.csv',
-    'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_s2_3000_5000_a1_145_a2_215_with_labeling.csv',
-    'data/generated/s1_3000_5000_a1_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_5000_a1_215_with_labeling.csv',
-    'data/generated/s1_3500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_3500_3000_a1_180_with_labeling.csv'
+    # 'data/generated/s1_1500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_1500_3000_a1_180_with_labeling.csv',
+    # 'data/generated/s1_3000_1000_a1_145_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_a1_145_with_labeling.csv',
+    # 'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_s2_3000_5000_a1_145_a2_215_with_labeling.csv',
+    # 'data/generated/s1_3000_5000_a1_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_5000_a1_215_with_labeling.csv',
+    # 'data/generated/s1_3500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_3500_3000_a1_180_with_labeling.csv',
+    'data/pos_&_neg_values/signal_results_s1_3500_2820_a1_180_with_labeling.csv'
 ]
 
 gt_csv_paths = [
-    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
-    'data/generated/s1_3000_1000_a1_145_samples_1000/generated_ground_truth_results.csv',
-    'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_ground_truth_results.csv',
-    'data/generated/s1_3000_5000_a1_215_samples_1000/generated_ground_truth_results.csv',
-    'data/generated/s1_3500_3000_a1_180_samples_1000/generated_ground_truth_results.csv'
+    #'data/generated/s1_1500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
+    #'data/generated/s1_3000_1000_a1_145_samples_1000/generated_ground_truth_results.csv',
+    #'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_ground_truth_results.csv',
+    #'data/generated/s1_3000_5000_a1_215_samples_1000/generated_ground_truth_results.csv',
+    #'data/generated/s1_3500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
+    'data/pos_&_neg_values/ground_truth_results.csv'
 ]
 
 if __name__ == "__main__":
