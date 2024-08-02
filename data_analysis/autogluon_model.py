@@ -5,7 +5,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
-
 # Function to load data
 def load_data(filepath):
     df = pd.read_csv(filepath)
@@ -34,6 +33,17 @@ def train_with_autogluon(train_data):
     )
     return predictor
 
+def plot_predictions(ground_truth, predictions, title):
+    plt.figure(figsize=(12, 6))
+    plt.plot(ground_truth.index, ground_truth, label='Ground Truth', color='blue')
+    plt.plot(ground_truth.index, predictions, label='Predictions', color='red', linestyle='--')
+    plt.title(title)
+    plt.xlabel('Sample Index')
+    plt.ylabel('Values')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
 def evaluate_new_data(model_path, new_data_path):
     # Load the new data
     new_df = load_data(new_data_path)
@@ -57,14 +67,7 @@ def evaluate_new_data(model_path, new_data_path):
     print(f"New Data RMSE: {new_rmse}")
     
     # Plot predictions vs ground truth
-    plt.figure(figsize=(10, 5))
-    plt.plot(y_new.reset_index(drop=True), label='Ground Truth', color='blue')
-    plt.plot(new_predictions, label='Predictions', color='red', linestyle='--')
-    plt.title('Comparison of Predictions and Ground Truth')
-    plt.xlabel('Sample Index')
-    plt.ylabel('Values')
-    plt.legend()
-    plt.show()
+    plot_predictions(y_new, new_predictions, 'Comparison of Predictions and Ground Truth on New Data')
     
 # Main function to run the process
 def main(filepath, random_split=True, model_path=None, new_data_path=None):
@@ -72,19 +75,13 @@ def main(filepath, random_split=True, model_path=None, new_data_path=None):
         # Evaluate on new dataset using an existing model
         evaluate_new_data(model_path, new_data_path)
     else:
-        
         df = load_data(filepath)
         
         # Prepare data
         X, y = prepare_data_for_modeling(df)
         
-        # Split the data into training and test sets based on user choice
-        if random_split:
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
-        else:
-            split_index = int(len(X) * 0.9)
-            X_train, X_test = X[:split_index], X[split_index:]
-            y_train, y_test = y[:split_index], y[split_index:]
+        # Split the data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) if random_split else (X[:int(len(X) * 0.9)], X[int(len(X) * 0.9):], y[:int(len(y) * 0.9)], y[int(len(y) * 0.9):])
         
         # Create training and test datasets for AutoGluon
         train_data = pd.concat([X_train, y_train], axis=1)
@@ -100,30 +97,12 @@ def main(filepath, random_split=True, model_path=None, new_data_path=None):
         
         print("AutoGluon model training complete.")
         
-        # Make predictions on the test set
+        # Predictions and evaluation for test data
         test_predictions = predictor.predict(test_data)
-        test_true = y_test
-
-        # Calculate evaluation metrics
-        rmse = np.sqrt(mean_squared_error(test_true, test_predictions))
+        rmse = np.sqrt(mean_squared_error(y_test, test_predictions))
         print(f"Test RMSE: {rmse}")
+        plot_predictions(y_test, test_predictions, 'Comparison of Predictions and Ground Truth on Test Data')
 
-        # Make predictions on the training set
-        train_predictions = predictor.predict(train_data)
-        train_true = y_train
-
-        # Calculate evaluation metrics
-        train_rmse = np.sqrt(mean_squared_error(train_true, train_predictions))
-        print(f"Train RMSE: {train_rmse}")
-
-        # Print leaderboard
-        leaderboard = predictor.leaderboard(test_data)
-        print(leaderboard)
-
-        # Compute feature importance
-        importance = predictor.feature_importance(test_data)
-        print("Feature Importance:")
-        print(importance)
 
 # Specify the path to your processed CSV file
 processed_data_path = 'data_processed/generated_processed_signal_data.csv'
@@ -133,5 +112,5 @@ model_directory = 'AutogluonModels/ag-20240802_052514'  # Path where the trained
 new_data_path = 'data_processed/loaded_processed_signal_data.csv'
 
 if __name__ == "__main__":
-       main(processed_data_path, random_split=True, model_path=model_directory, new_data_path=new_data_path)
+       main(new_data_path, random_split=False)
 
