@@ -92,7 +92,6 @@ multiprocess==0.70.16
 murmurhash==1.0.10
 networkx==3.3
 nlpaug==1.1.11
-nltk==3.8.1
 noise==1.2.2
 nptyping==2.4.1
 numba==0.60.0
