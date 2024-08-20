@@ -32,7 +32,7 @@ def main(filepath):
     X, y = prepare_data_for_analysis(df)
     regression_analysis(X, y)
 
-processed_data_path = 'data_processed/processed_signal_data.csv'
+processed_data_path = 'data_processed/generated_processed_signal_data.csv'
 
 if __name__ == "__main__":
     main(processed_data_path)

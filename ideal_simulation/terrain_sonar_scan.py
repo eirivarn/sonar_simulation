@@ -156,12 +156,12 @@ def ground_wave_function(y: np.ndarray) -> np.ndarray:
     return total_wave.astype(int)
 
 def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: List[Tuple[int, int]], angles: List[float]) -> Tuple[list, np.ndarray]:
+    max_range = config.get('sonar', 'max_range')
+    angle_width = config.get('sonar', 'angle_width')
+    num_rays = config.get('sonar', 'num_rays')
     if config.load_data:
         mesh_paths = config.separate_mesh_paths
         axis = config.get('mesh_processing', 'slice_axis')
-        max_range = config.get('sonar', 'max_range')
-        angle_width = config.get('sonar', 'angle_width')
-        num_rays = config.get('sonar', 'num_rays')
 
         if not all(isinstance(path, str) for path in mesh_paths):
             raise ValueError("All mesh paths must be strings.")
@@ -211,10 +211,10 @@ def run_ideal_mesh_sonar_scan_simulation(slice_position: int, sonar_positions: L
         dimensions = config.dimensions
         pipe_center = config.pipe_center
         pipe_radius = config.pipe_radius
-        label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius)
+        padded_label_map = create_room_with_pipe_and_ground(dimensions, pipe_center, pipe_radius)
         y_range = (0, dimensions[1])
-        z_range = (0, dimensions[0])
-        print(f"Synthetic data generated with shape: {label_map.shape} and dimensions: {dimensions}")
+        padded_z_range = (0, dimensions[0])
+        print(f"Synthetic data generated with shape: {padded_label_map.shape} and dimensions: {dimensions}")
 
     all_sonar_data, all_theta = [], []
     

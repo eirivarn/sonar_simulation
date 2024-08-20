@@ -18,12 +18,12 @@ def load_data(filepath):
 def prepare_data_for_modeling(df):
     label_columns = [f'label_{i}' for i in range(-21, 22)]
     X = df[label_columns]
-    y = df['abs_diff_stability']
+    y = df['diff_stability']
     return X, y
 
 # Function to train model with AutoGluon
 def train_with_autogluon(train_data):
-    predictor = TabularPredictor(label='abs_diff_stability').fit(
+    predictor = TabularPredictor(label='diff_stability').fit(
         train_data,
         hyperparameters={
             'CAT': {},
@@ -56,7 +56,7 @@ def evaluate_new_data(model_path, new_data_path):
     
     # Create the dataset for AutoGluon
     new_data = pd.concat([X_new, y_new], axis=1)
-    new_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['abs_diff_stability']
+    new_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['diff_stability']
     new_data = TabularDataset(new_data)
     
     # Make predictions
@@ -85,11 +85,11 @@ def main(filepath, random_split=True, model_path=None, new_data_path=None):
         
         # Create training and test datasets for AutoGluon
         train_data = pd.concat([X_train, y_train], axis=1)
-        train_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['abs_diff_stability']
+        train_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['diff_stability']
         train_data = TabularDataset(train_data)
         
         test_data = pd.concat([X_test, y_test], axis=1)
-        test_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['abs_diff_stability']
+        test_data.columns = [f'label_{i}' for i in range(-21, 22)] + ['diff_stability']
         test_data = TabularDataset(test_data)
 
         # Train the model
@@ -105,12 +105,12 @@ def main(filepath, random_split=True, model_path=None, new_data_path=None):
 
 
 # Specify the path to your processed CSV file
-processed_data_path = 'data_processed/generated_processed_signal_data.csv'
+processed_data_path = 'data_processed/processed_signal_data.csv'
 # Specify the path to the model directory
 model_directory = 'AutogluonModels/ag-20240802_052514'  # Path where the trained model is saved
 # Specify the path to the new data
 new_data_path = 'data_processed/loaded_processed_signal_data.csv'
 
 if __name__ == "__main__":
-       main(new_data_path, random_split=False)
+       main(processed_data_path, random_split=False)
 

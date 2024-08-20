@@ -12,9 +12,9 @@ def load_data(filepath):
     return df
 
 def prepare_data_for_analysis(df):
-    # Excluding 'abs_diff_stability' to use it as the dependent variable
-    X = df.drop('abs_diff_stability', axis=1)
-    y = df['abs_diff_stability']
+    # Excluding 'diff_stability' to use it as the dependent variable
+    X = df.drop('diff_stability', axis=1)
+    y = df['diff_stability']
     return X, y
 
 def plot_target_distribution(y):
@@ -61,7 +61,7 @@ def random_forest_analysis(X, y, random_split=True):
 
 def main(filepath, random_split=True):
     df = load_data(filepath)
-    plot_target_distribution(df['abs_diff_stability'])
+    plot_target_distribution(df['diff_stability'])
     X, y = prepare_data_for_analysis(df)
     random_forest_analysis(X, y, random_split)
 

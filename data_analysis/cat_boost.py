@@ -59,7 +59,7 @@ def plot_feature_importances(importances, features):
 def main(filepath):
     df = load_data(filepath)
     X, y = prepare_data_for_modeling(df)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     model = train_catboost_model(X_train, y_train)
     
     # Evaluate the model
@@ -71,7 +71,7 @@ def main(filepath):
     feature_importances = model.get_feature_importance()
     plot_feature_importances(feature_importances, X.columns)
 
-processed_data_path = 'data_processed/processed_signal_data.csv'
+processed_data_path = 'data_processed/generated_processed_signal_data.csv'
 
 if __name__ == "__main__":
     main(processed_data_path)

@@ -19,13 +19,13 @@ def add_features(signal_df, gt_df):
     signal_df = remove_outliers(signal_df, 'stability_percentage').copy()
     gt_df = remove_outliers(gt_df, 'stability_percentage').copy()
 
-    # Calculate the absolute difference in stability percentage
-    stability_diff = abs(signal_df['stability_percentage'] - gt_df['stability_percentage'])
-    signal_df.loc[:, 'abs_diff_stability'] = stability_diff  # Using .loc to avoid SettingWithCopyWarning
+    # Calculate the actual difference in stability percentage
+    stability_diff = signal_df['stability_percentage'] - gt_df['stability_percentage']
+    signal_df.loc[:, 'diff_stability'] = stability_diff  # Using .loc to avoid SettingWithCopyWarning
     
     # Include label columns from signal data
     label_columns = [col for col in signal_df.columns if 'label_' in col]
-    signal_df = pd.concat([signal_df[label_columns], signal_df[['abs_diff_stability']]], axis=1).copy()
+    signal_df = pd.concat([signal_df[label_columns], signal_df[['diff_stability']]], axis=1).copy()
 
     return signal_df
 
@@ -45,23 +45,24 @@ def main(signal_csv_paths, gt_csv_paths):
     
     save_processed_data(combined_df)
 
+
 # Specify the paths to your CSV files
 signal_csv_paths = [
-    # 'data/generated/s1_1500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_1500_3000_a1_180_with_labeling.csv',
+    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_1500_3000_a1_180_with_labeling.csv',
     # 'data/generated/s1_3000_1000_a1_145_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_a1_145_with_labeling.csv',
     # 'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_1000_s2_3000_5000_a1_145_a2_215_with_labeling.csv',
     # 'data/generated/s1_3000_5000_a1_215_samples_1000/generated_signal_results_with_labeling.csv_s1_3000_5000_a1_215_with_labeling.csv',
     # 'data/generated/s1_3500_3000_a1_180_samples_1000/generated_signal_results_with_labeling.csv_s1_3500_3000_a1_180_with_labeling.csv',
-    'data/pos_&_neg_values/signal_results_s1_3500_2820_a1_180_with_labeling.csv'
+    #'data/pos_&_neg_values/signal_results_s1_3500_2820_a1_180_with_labeling.csv'
 ]
 
 gt_csv_paths = [
-    #'data/generated/s1_1500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
+    'data/generated/s1_1500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
     #'data/generated/s1_3000_1000_a1_145_samples_1000/generated_ground_truth_results.csv',
     #'data/generated/s1_3000_1000_s2_3000_5000_a1_145_a2_215_samples_1000/generated_ground_truth_results.csv',
     #'data/generated/s1_3000_5000_a1_215_samples_1000/generated_ground_truth_results.csv',
     #'data/generated/s1_3500_3000_a1_180_samples_1000/generated_ground_truth_results.csv',
-    'data/pos_&_neg_values/ground_truth_results.csv'
+    #'data/pos_&_neg_values/ground_truth_results.csv'
 ]
 
 if __name__ == "__main__":
