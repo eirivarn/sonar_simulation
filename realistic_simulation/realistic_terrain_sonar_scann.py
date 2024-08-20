@@ -7,7 +7,7 @@ import cv2
 from noise import pnoise1
 
 # Load and transform the mesh
-terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
+terrain = pv.read('/Users/eirikvarnes/code/blender/combined_to_scale.obj')
 rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 terrain.points = terrain.points.dot(rotation_matrix)
 
@@ -159,9 +159,9 @@ def plot_both_views(room, sonar_position, sonar_data, angle, angle_width, max_ra
 
     plt.show()
 
-""""
+
 # Main Execution
-dimensions = (1000, 1000)
+dimensions = (2000, 2000)
 sonar_position = (500, 500)
 angle = 180
 max_range = 500
@@ -169,7 +169,7 @@ angle_width = 45
 num_rays = 50
 
 # Extract a single slice and create binary map
-position = -25
+position = 20
 slice_df = extract_2d_slice_from_mesh(terrain, position, axis='x')
 
 if slice_df is not None:
@@ -189,4 +189,3 @@ if slice_df is not None:
     plot_both_views(binary_map, sonar_position, sonar_data, angle, angle_width, max_range, theta)
 else:
     print("No slice data available to display.")
-"""

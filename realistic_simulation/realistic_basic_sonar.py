@@ -4,14 +4,23 @@ from noise import pnoise1
 import random
 import cv2
 
+def ground_wave_function(x):
+    """ Generates a wavy ground surface. """
+    # Use Perlin noise to create a smooth wave pattern
+    scale = 100.0  # Adjust this value to control the frequency of the wave
+    amplitude = 20  # Adjust this value to control the height of the wave
+    return int(amplitude * pnoise1(x / scale)+50)  # Center the wave around y=500
+
+
 def create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius, ground_wave):
-    """ Create a 2D room with a pipe, ground wave, and random debris. """
+    """ Create a 2D room with a pipe outline, ground wave, and random debris. """
     room = np.zeros(dimensions)
 
-    # Draw the pipe (circle)
+    # Draw the pipe (circle outline)
     y, x = np.ogrid[:dimensions[0], :dimensions[1]]
     distance_from_center = np.sqrt((x - pipe_center[1])**2 + (y - pipe_center[0])**2)
-    room += np.clip(1 - (distance_from_center - pipe_radius), 0, 1)
+    pipe_outline = np.abs(distance_from_center - pipe_radius) < 1  # Create a thin outline
+    room[pipe_outline] = 1
 
     # Draw the ground wave
     for y in range(dimensions[1]):
@@ -20,10 +29,10 @@ def create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius
             room[x, y] = 1
 
     # Add random debris with varying shapes and reflectivity
-    num_debris = 1000  # Increase the number of debris
+    num_debris = 5  # Increase the number of debris
     for _ in range(num_debris):
         shape_type = random.choice(['circle', 'ellipse'])
-        reflectivity = random.uniform(0.2, 0.6)  # Reflectivity range for weaker signals
+        reflectivity = random.uniform(0.1, 0.2)  # Reflectivity range for weaker signals
         if shape_type == 'circle':
             center = (random.randint(0, dimensions[1] - 1), random.randint(0, dimensions[0] - 1))
             radius = random.randint(1, 3)
@@ -43,9 +52,9 @@ def create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius
 def material_reflectivity(material_value):
     """ Determine reflectivity based on material value. """
     if material_value > 0.8:
-        return 0.75  # Strong reflector (e.g., metal)
+        return 0.3  # Strong reflector (e.g., metal)
     elif material_value > 0.5:
-        return 0.33  # Moderate reflector (e.g., debris)
+        return 0.2  # Moderate reflector (e.g., debris)
     else:
         return 0.15  # Weak reflector (e.g., sediment)
 
@@ -132,18 +141,18 @@ def plot_both_views(room, pos, sonar_data, angle_width, max_range, theta):
 
 
 # Define room dimensions
-dimensions = (1000, 1000)
+dimensions = (3000, 3000)
 
 # Define pipe parameters (circle)
-pipe_center = (30, 500)  # (y, x)
-pipe_radius = 50  # Radius of the pipe
+pipe_center = (100, 1500)  # (y, x)
+pipe_radius = 60  # Radius of the pipe
 
 # Define sonar parameters
-pos = (250, 250)
-angle = 120  # direction in degrees (mid-point direction pointing down)
-max_range = 600
-angle_width = 60  # total sonar angle width in degrees
-num_rays = 100  # number of rays for higher resolution
+pos = (500, 1500)
+angle = 180  # direction in degrees (mid-point direction pointing down)
+max_range = 800
+angle_width = 90  # total sonar angle width in degrees
+num_rays = 300  # number of rays for higher resolution
 
 # Create room with pipe, ground wave, and random debris
 room = create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_radius, ground_wave_function)
@@ -152,4 +161,4 @@ room = create_room_with_pipe_ground_and_debris(dimensions, pipe_center, pipe_rad
 sonar_data, theta = ray_cast(room, pos, angle, max_range, angle_width, num_rays)
 
 # Visualize both views
-plot_both_views(room, pos, sonar_data, angle, angle_width, max_range, theta)
+plot_both_views(room, pos, sonar_data, angle_width, max_range, theta)
