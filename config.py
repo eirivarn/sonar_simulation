@@ -5,18 +5,18 @@ class Config:
     def __init__(self):
         self.dimensions: Tuple[int, int] = (4000, 6000)
         self.area_dimensions: Tuple[int, int] = (35, 1000)
-        self.pipe_center: Tuple[int, int] = (200, 3000)
+        self.pipe_center: Tuple[int, int] = (500, 3000)
         self.pipe_radius: int = 100
-        self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined.obj']
+        self.combined_mesh_path: List[str] = ['/Users/eirikvarnes/code/blender/combined_to_scale.obj']
         self.separate_mesh_paths: List[str] = ['/Users/eirikvarnes/code/blender/seafloor_to_scale.obj', '/Users/eirikvarnes/code/blender/pipeline_to_scale.obj']
-        self.show_plots: bool = True 
-        self.verbose: bool = True 
+        self.show_plots: bool = False
+        self.verbose: bool = False
         self.get_ground_truth: bool = True
-        self.load_data: bool = False  
+        self.load_data: bool = False
         
         self.sonar: Dict[str, Any] = {
             "max_range": 5000,
-            "angle_width": 90,
+            "angle_width": 45,
             "num_rays": 150,
             "sonar_positions": [(50, 20), (30, 40)],
             "angles": [90, 45],
@@ -56,7 +56,7 @@ class Config:
             "slice_axes": ['x', 'y', 'z'],
             "padding_factor": 15,
             "grid_size": (400, 400),
-            "slice_positions": list(range(0, 1, 1)),
+            "slice_positions": list(range(0, 1000, 1)),
             "rotation_matrix": [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
         }
         self.interpolation: Dict[str, Any] = {
@@ -72,7 +72,7 @@ class Config:
             "no_signal": 0
         }
         self.ground_wave = {
-            "base_level": 95,  # Middle of vertical range
+            "base_level": 395,  # Middle of vertical range
             "components": [
                 {"amplitude": 100, "frequency": 0.002, "phase_shift": np.pi / 4},  # Very large wavelength, large amplitude
                 {"amplitude": 50, "frequency": 0.002, "phase_shift": np.pi / 4},  # Large wavelength, medium amplitude

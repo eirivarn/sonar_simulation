@@ -6,7 +6,7 @@ import random
 import cv2
 
 # Load and transform the mesh
-terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
+terrain = pv.read('/Users/eirikvarnes/code/blender/combined_to_scale.obj')
 rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 terrain.points = terrain.points.dot(rotation_matrix)
 

@@ -7,7 +7,7 @@ import cv2
 from noise import pnoise1
 
 # Load and transform the mesh
-terrain = pv.read('/Users/eirikvarnes/code/totalenergies/simulation_test/blender_terrain_test_1.obj')
+terrain = pv.read('/Users/eirikvarnes/code/blender/combined_to_scale.obj')
 rotation_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 terrain.points = terrain.points.dot(rotation_matrix)
 
@@ -27,7 +27,7 @@ def extract_2d_slice_from_mesh(mesh, position, axis='x'):
     df = pd.DataFrame(points, columns=['X', 'Y', 'Z'])
     return df
 
-def create_binary_map_from_slice(dimensions, slice_df, num_debris=100):
+def create_binary_map_from_slice(dimensions, slice_df, num_debris=200):
     """ Create a binary map from slice data with added realism and noise. """
     binary_map = np.zeros(dimensions)
     min_x, max_x = slice_df['Z'].min(), slice_df['Z'].max()
@@ -71,11 +71,11 @@ def create_binary_map_from_slice(dimensions, slice_df, num_debris=100):
 def material_reflectivity(material_value):
     """ Determine reflectivity based on material value. """
     if material_value > 0.6:  # Adjusted threshold for debris
-        return 0.75  # Strong reflector (e.g., metal)
+        return 0.1  # Strong reflector (e.g., metal)
     elif material_value > 0.3:
-        return 0.001  # Moderate reflector (e.g., debris)
+        return 0.1  # Moderate reflector (e.g., debris)
     else:
-        return 0.0001  # Weak reflector (e.g., sediment)
+        return 0.35  # Weak reflector (e.g., sediment)
 
 def calculate_multipath_reflections(material_value, incident_strength):
     """ Calculate reflections and transmissions based on material reflectivity. """
@@ -84,8 +84,8 @@ def calculate_multipath_reflections(material_value, incident_strength):
     transmitted_strength = incident_strength * (1 - reflectivity)
     return reflected_strength, transmitted_strength
 
-def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_factor=0.0001):
-    """ Perform ray-casting to simulate sonar data with multipath reflections and water attenuation. """
+def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_factor=0.0000001):
+    """ Perform ray-casting to simulate sonar data with multipath reflections and no water attenuation. """
     rows, cols = room.shape
     sonar_data = []
     theta = []
@@ -98,21 +98,17 @@ def ray_cast(room, pos, angle, max_range, angle_width, num_rays, attenuation_fac
 
         reflections = []
         for r in range(max_range):
-            current_strength = incident_strength * np.exp(-attenuation_factor * r)
+            current_strength = incident_strength - attenuation_factor * r
             x = int(pos[0] + r * np.cos(ray_angle_rad))
             y = int(pos[1] + r * np.sin(ray_angle_rad))
             if x < 0 or x >= rows or y < 0 or y >= cols:
-                reflections.append((r, current_strength))
-                break
+                break  # Stop the ray if it goes out of bounds
             if room[x, y] > 0:  # Check for reflectivity instead of binary threshold
                 reflected_strength, transmitted_strength = calculate_multipath_reflections(room[x, y], current_strength)
                 reflections.append((r, reflected_strength))
                 incident_strength = transmitted_strength
-                # Debugging: Print the current status of the ray
-                # print(f"Ray {i}: Hit at (x={x}, y={y}) with reflected_strength={reflected_strength}, transmitted_strength={transmitted_strength}")
-
                 # Continue propagating the ray
-                if transmitted_strength < 0.1:  # Stop if the transmitted signal is too weak
+                if transmitted_strength < 0.01:  # Stop if the transmitted signal is too weak
                     break
 
         distorted_reflections = [(int(r + np.random.normal(0, 2)), strength * np.random.uniform(0.9, 1.1)) for r, strength in reflections]
@@ -159,34 +155,25 @@ def plot_both_views(room, sonar_position, sonar_data, angle, angle_width, max_ra
 
     plt.show()
 
-""""
 # Main Execution
-dimensions = (1000, 1000)
-sonar_position = (500, 500)
+dimensions = (1000, 6000)
+sonar_position = (800, 3200)
 angle = 180
-max_range = 500
+max_range = 900
 angle_width = 45
-num_rays = 50
+num_rays = 200
 
 # Extract a single slice and create binary map
-position = -25
+position = 26
 slice_df = extract_2d_slice_from_mesh(terrain, position, axis='x')
 
 if slice_df is not None:
     binary_map = create_binary_map_from_slice(dimensions, slice_df)
     
-
     # Perform ray-casting on the binary map
     sonar_data, theta = ray_cast(binary_map, sonar_position, angle, max_range, angle_width, num_rays)
-
-    # Debugging: Print the sonar data
-    #for i, (reflections, t) in enumerate(zip(sonar_data, theta)):
-    #    print(f"Ray {i}:")
-    #    for r, strength in reflections:
-    #        # print(f"  Distance={r}, Strength={strength}")
 
     # Visualize both views
     plot_both_views(binary_map, sonar_position, sonar_data, angle, angle_width, max_range, theta)
 else:
     print("No slice data available to display.")
-"""
