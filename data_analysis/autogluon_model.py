@@ -203,8 +203,8 @@ def main(filepath, signal_csv_path=None, gt_csv_path=None, model_path=None):
 
 # Specify the paths to your processed CSV file, signal CSV, GT CSV, and model
 processed_data_path = 'data_processed/processed_signal_data.csv'
-signal_csv_path = 'data/pos_&_neg_values/s1_3500_2665_s2_3500_2965_a1_175_a2_185/signal_results_s1_3500_2665_s2_3500_2965_a1_175_a2_185_with_labeling.csv'
-gt_csv_path = 'data/pos_&_neg_values/ground_truth_results.csv'
+signal_csv_path = 'data/generated/elevated_seasfloor/s1_3000_1000_s2_3000_5000_a1_145_a2_215/generated_signal_results_with_labeling.csv_s1_3000_1000_s2_3000_5000_a1_145_a2_215_with_labeling.csv'
+gt_csv_path = 'data/generated/elevated_seasfloor/s1_3000_1000_s2_3000_5000_a1_145_a2_215/generated_ground_truth_results.csv'
 model_path = 'path/to/your/saved/model'
 
 if __name__ == "__main__":

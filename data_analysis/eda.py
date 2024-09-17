@@ -3,8 +3,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
 
 # Path to the CSV files
-path_gt = 'data/generated/elevated_seasfloor/s1_3000_2850_s2_3000_3150_a1_175_a2_185/generated_ground_truth_results.csv'  # Update with the actual path to your ground truth CSV file
-path_est = 'data/generated/elevated_seasfloor/s1_3000_2850_s2_3000_3150_a1_175_a2_185/generated_signal_results.csv_s1_3000_2850_s2_3000_3150_a1_175_a2_185.csv'    # Update with the actual path to your estimates CSV file
+path_gt = 'data/generated/elevated_seasfloor/s1_3000_1000_s2_3000_5000_a1_145_a2_215/generated_ground_truth_results.csv'  # Update with the actual path to your ground truth CSV file
+path_est = 'data/generated/elevated_seasfloor/s1_3000_1000_s2_3000_5000_a1_145_a2_215/generated_signal_results.csv_s1_3000_1000_s2_3000_5000_a1_145_a2_215.csv'    # Update with the actual path to your estimates CSV file
 
 # Load data from CSV files
 df_gt = pd.read_csv(path_gt)
